@@ -2,12 +2,14 @@ import { ADMIN_NPUB } from "../config.ts";
 import {
   getAllInviteCodes,
   createInviteCode,
+  updateInviteCode,
   deleteInviteCode,
   toggleInviteCode,
   getAllApps,
   createApp,
   updateApp,
   deleteApp,
+  toggleAppVisibility,
 } from "../db.ts";
 
 function isAdmin(npub: string | null): boolean {
@@ -49,7 +51,7 @@ export async function handleCreateInviteCode(req: Request): Promise<Response> {
     }
 
     const body = await req.json();
-    const { code, description, maxUses } = body;
+    const { code, description, maxUses, welcomeMessage } = body;
 
     if (!code || typeof code !== "string" || code.length < 3) {
       return Response.json(
@@ -61,7 +63,8 @@ export async function handleCreateInviteCode(req: Request): Promise<Response> {
     const inviteCode = createInviteCode(
       code.trim(),
       description?.trim() || null,
-      maxUses ? Number(maxUses) : null
+      maxUses ? Number(maxUses) : null,
+      welcomeMessage?.trim() || null
     );
 
     if (!inviteCode) {
@@ -74,6 +77,44 @@ export async function handleCreateInviteCode(req: Request): Promise<Response> {
     return Response.json({ success: true, code: inviteCode });
   } catch (err) {
     console.error("Create invite code error:", err);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function handleUpdateInviteCode(req: Request, code: string): Promise<Response> {
+  try {
+    const npub = req.headers.get("X-Npub");
+
+    if (!isAdmin(npub)) {
+      return Response.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { description, maxUses, welcomeMessage } = body;
+
+    const inviteCode = updateInviteCode(
+      code,
+      description?.trim() || null,
+      maxUses ? Number(maxUses) : null,
+      welcomeMessage?.trim() || null
+    );
+
+    if (!inviteCode) {
+      return Response.json(
+        { success: false, error: "Code not found" },
+        { status: 404 }
+      );
+    }
+
+    return Response.json({ success: true, code: inviteCode });
+  } catch (err) {
+    console.error("Update invite code error:", err);
     return Response.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -305,6 +346,46 @@ export async function handleDeleteApp(req: Request, id: number): Promise<Respons
     return Response.json({ success: true });
   } catch (err) {
     console.error("Delete app error:", err);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function handleToggleApp(req: Request, id: number): Promise<Response> {
+  try {
+    const npub = req.headers.get("X-Npub");
+
+    if (!isAdmin(npub)) {
+      return Response.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { visible } = body;
+
+    if (typeof visible !== "boolean") {
+      return Response.json(
+        { success: false, error: "Missing visible field" },
+        { status: 400 }
+      );
+    }
+
+    const app = toggleAppVisibility(id, visible);
+
+    if (!app) {
+      return Response.json(
+        { success: false, error: "App not found" },
+        { status: 404 }
+      );
+    }
+
+    return Response.json({ success: true, app });
+  } catch (err) {
+    console.error("Toggle app error:", err);
     return Response.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

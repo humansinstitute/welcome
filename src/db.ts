@@ -22,6 +22,13 @@ db.run(`
   )
 `);
 
+// Migration: Add welcome_dismissed column to users if it doesn't exist
+try {
+  db.run("ALTER TABLE users ADD COLUMN welcome_dismissed INTEGER NOT NULL DEFAULT 0");
+} catch {
+  // Column already exists, ignore
+}
+
 db.run(`
   CREATE TABLE IF NOT EXISTS apps (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,6 +44,13 @@ db.run(`
 // Migration: Add teleport_pubkey column if it doesn't exist
 try {
   db.run("ALTER TABLE apps ADD COLUMN teleport_pubkey TEXT DEFAULT NULL");
+} catch {
+  // Column already exists, ignore
+}
+
+// Migration: Add visible column if it doesn't exist (default to visible)
+try {
+  db.run("ALTER TABLE apps ADD COLUMN visible INTEGER NOT NULL DEFAULT 1");
 } catch {
   // Column already exists, ignore
 }
@@ -62,9 +76,17 @@ db.run(`
     max_uses INTEGER DEFAULT NULL,
     uses INTEGER NOT NULL DEFAULT 0,
     active INTEGER NOT NULL DEFAULT 1,
+    welcome_message TEXT DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Migration: Add welcome_message column to invite_codes if it doesn't exist
+try {
+  db.run("ALTER TABLE invite_codes ADD COLUMN welcome_message TEXT DEFAULT NULL");
+} catch {
+  // Column already exists, ignore
+}
 
 db.run(`
   CREATE TABLE IF NOT EXISTS teleport_keys (
@@ -157,8 +179,14 @@ export function getAppsByUserId(userId: number): (App & { role: string })[] {
 const getAllAppsStmt = db.query<App, []>(
   "SELECT * FROM apps ORDER BY created_at DESC"
 );
+const getVisibleAppsStmt = db.query<App, []>(
+  "SELECT * FROM apps WHERE visible = 1 ORDER BY created_at DESC"
+);
 const getAppByIdStmt = db.query<App, [number]>(
   "SELECT * FROM apps WHERE id = ?"
+);
+const toggleAppVisibilityStmt = db.query<App, [number, number]>(
+  "UPDATE apps SET visible = ? WHERE id = ? RETURNING *"
 );
 const createAppStmt = db.query<App, [string, string | null, string | null, string, string | null]>(
   `INSERT INTO apps (name, description, icon_url, url, teleport_pubkey) VALUES (?, ?, ?, ?, ?) RETURNING *`
@@ -170,6 +198,16 @@ const deleteAppStmt = db.prepare("DELETE FROM apps WHERE id = ?");
 
 export function getAllApps(): App[] {
   return getAllAppsStmt.all();
+}
+
+export function getVisibleApps(): App[] {
+  return getVisibleAppsStmt.all();
+}
+
+export function toggleAppVisibility(id: number, visible: boolean): App | null {
+  if (!id) return null;
+  const app = toggleAppVisibilityStmt.get(visible ? 1 : 0, id) as App | undefined;
+  return app ?? null;
 }
 
 export function getAppById(id: number): App | null {
@@ -234,8 +272,11 @@ const getAllInviteCodesStmt = db.query<InviteCode, []>(
 const getInviteCodeStmt = db.query<InviteCode, [string]>(
   "SELECT * FROM invite_codes WHERE code = ?"
 );
-const createInviteCodeStmt = db.query<InviteCode, [string, string | null, number | null]>(
-  `INSERT INTO invite_codes (code, description, max_uses) VALUES (?, ?, ?) RETURNING *`
+const createInviteCodeStmt = db.query<InviteCode, [string, string | null, number | null, string | null]>(
+  `INSERT INTO invite_codes (code, description, max_uses, welcome_message) VALUES (?, ?, ?, ?) RETURNING *`
+);
+const updateInviteCodeStmt = db.query<InviteCode, [string | null, number | null, string | null, string]>(
+  `UPDATE invite_codes SET description = ?, max_uses = ?, welcome_message = ? WHERE code = ? RETURNING *`
 );
 const incrementInviteCodeUsesStmt = db.query<InviteCode, [string]>(
   `UPDATE invite_codes SET uses = uses + 1 WHERE code = ? RETURNING *`
@@ -266,14 +307,30 @@ export function isValidInviteCode(code: string): boolean {
 export function createInviteCode(
   code: string,
   description: string | null = null,
-  maxUses: number | null = null
+  maxUses: number | null = null,
+  welcomeMessage: string | null = null
 ): InviteCode | null {
   if (!code) return null;
   try {
-    const inviteCode = createInviteCodeStmt.get(code, description, maxUses) as InviteCode | undefined;
+    const inviteCode = createInviteCodeStmt.get(code, description, maxUses, welcomeMessage) as InviteCode | undefined;
     return inviteCode ?? null;
   } catch {
     return null; // Code already exists
+  }
+}
+
+export function updateInviteCode(
+  code: string,
+  description: string | null = null,
+  maxUses: number | null = null,
+  welcomeMessage: string | null = null
+): InviteCode | null {
+  if (!code) return null;
+  try {
+    const inviteCode = updateInviteCodeStmt.get(description, maxUses, welcomeMessage, code) as InviteCode | undefined;
+    return inviteCode ?? null;
+  } catch {
+    return null;
   }
 }
 
@@ -293,6 +350,29 @@ export function toggleInviteCode(code: string, active: boolean): InviteCode | nu
   if (!code) return null;
   const inviteCode = toggleInviteCodeStmt.get(active ? 1 : 0, code) as InviteCode | undefined;
   return inviteCode ?? null;
+}
+
+// Welcome message functions
+const getUserWelcomeInfoStmt = db.query<{ welcome_message: string | null; welcome_dismissed: number }, [string]>(
+  `SELECT ic.welcome_message, u.welcome_dismissed
+   FROM users u
+   LEFT JOIN invite_codes ic ON u.invite_code = ic.code
+   WHERE u.npub = ?`
+);
+const dismissWelcomeStmt = db.query<User, [string]>(
+  `UPDATE users SET welcome_dismissed = 1, updated_at = CURRENT_TIMESTAMP WHERE npub = ? RETURNING *`
+);
+
+export function getUserWelcomeInfo(npub: string): { welcome_message: string | null; welcome_dismissed: number } | null {
+  if (!npub) return null;
+  const info = getUserWelcomeInfoStmt.get(npub);
+  return info ?? null;
+}
+
+export function dismissWelcome(npub: string): User | null {
+  if (!npub) return null;
+  const user = dismissWelcomeStmt.get(npub) as User | undefined;
+  return user ?? null;
 }
 
 // Teleport key functions

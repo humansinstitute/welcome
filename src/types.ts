@@ -12,6 +12,7 @@ export type User = {
   invite_code: string;
   onboarding_status: OnboardingStatus;
   display_name: string | null;
+  welcome_dismissed: number; // SQLite boolean (0 or 1)
   created_at: string;
   updated_at: string;
 };
@@ -24,6 +25,7 @@ export type App = {
   icon_url: string | null;
   url: string;
   teleport_pubkey: string | null; // App's public key for key teleport (npub or hex)
+  visible: number; // SQLite boolean (0 or 1) - whether app is shown to users
   created_at: string;
 };
 
@@ -53,5 +55,6 @@ export type InviteCode = {
   max_uses: number | null;
   uses: number;
   active: number; // SQLite boolean (0 or 1)
+  welcome_message: string | null; // Markdown welcome message for users
   created_at: string;
 };

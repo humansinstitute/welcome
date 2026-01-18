@@ -908,6 +908,10 @@ export function renderAppsPage(): string {
       border-radius: var(--radius-sm);
     }
 
+    .app-admin-item.hidden-app {
+      opacity: 0.6;
+    }
+
     .app-admin-icon {
       width: 48px;
       height: 48px;
@@ -1033,6 +1037,301 @@ export function renderAppsPage(): string {
       border: none;
       border-top: 1px solid var(--border-soft);
     }
+
+    /* Edit Invite Code Modal */
+    .edit-code-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(61, 56, 51, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(4px);
+    }
+
+    .edit-code-modal-overlay[hidden] {
+      display: none;
+    }
+
+    .edit-code-modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      max-width: 480px;
+      width: 90%;
+      position: relative;
+      box-shadow: var(--shadow-warm);
+      border: 1px solid var(--border);
+    }
+
+    .edit-code-modal-close {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    .edit-code-modal-close:hover {
+      color: var(--text);
+    }
+
+    .edit-code-modal h2 {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+
+    .edit-code-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .edit-code-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+
+    .edit-code-form input,
+    .edit-code-form textarea {
+      padding: 0.6rem 0.75rem;
+      font-size: 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-family: var(--font-body);
+    }
+
+    .edit-code-form input:focus,
+    .edit-code-form textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .edit-code-form textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .edit-code-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .edit-code-actions button {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .edit-code-actions button[type="button"] {
+      background: var(--surface-warm);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .edit-code-actions button[type="button"]:hover {
+      border-color: var(--accent);
+    }
+
+    .edit-code-actions button[type="submit"] {
+      background: var(--purple);
+      color: white;
+      border: none;
+    }
+
+    .edit-code-actions button[type="submit"]:hover {
+      background: var(--purple-light);
+    }
+
+    .edit-code-actions button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .add-code-form textarea {
+      padding: 0.6rem 0.75rem;
+      font-size: 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-family: var(--font-body);
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .add-code-form textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Welcome Message Component */
+    .welcome-message-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .welcome-message-card[hidden] {
+      display: none;
+    }
+
+    .welcome-message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      background: var(--surface-warm);
+      border-bottom: 1px solid var(--border-soft);
+      transition: background 0.2s;
+    }
+
+    .welcome-message-header:hover {
+      background: var(--border-soft);
+    }
+
+    .welcome-message-header h2 {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 400;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .welcome-message-header .chevron {
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+
+    .welcome-message-card.collapsed .welcome-message-header .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .welcome-message-card.collapsed .welcome-message-content {
+      display: none;
+    }
+
+    .welcome-message-content {
+      padding: 1.5rem;
+    }
+
+    .welcome-message-content .markdown-body {
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .welcome-message-content .markdown-body h1 {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin: 0 0 1rem;
+    }
+
+    .welcome-message-content .markdown-body h2 {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .welcome-message-content .markdown-body h3 {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 400;
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    .welcome-message-content .markdown-body p {
+      margin: 0 0 1rem;
+    }
+
+    .welcome-message-content .markdown-body ul,
+    .welcome-message-content .markdown-body ol {
+      margin: 0 0 1rem;
+      padding-left: 1.5rem;
+    }
+
+    .welcome-message-content .markdown-body li {
+      margin-bottom: 0.25rem;
+    }
+
+    .welcome-message-content .markdown-body code {
+      background: var(--surface-warm);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    .welcome-message-content .markdown-body pre {
+      background: var(--surface-warm);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      margin: 0 0 1rem;
+    }
+
+    .welcome-message-content .markdown-body pre code {
+      background: none;
+      padding: 0;
+    }
+
+    .welcome-message-content .markdown-body a {
+      color: var(--purple);
+    }
+
+    .welcome-message-content .markdown-body blockquote {
+      margin: 0 0 1rem;
+      padding-left: 1rem;
+      border-left: 3px solid var(--border);
+      color: var(--text-warm);
+    }
+
+    .welcome-message-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-soft);
+      margin-top: 1rem;
+    }
+
+    .welcome-message-dismiss {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-family: var(--font-body);
+      background: var(--surface-warm);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .welcome-message-dismiss:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
   </style>
 </head>
 <body>
@@ -1051,6 +1350,20 @@ export function renderAppsPage(): string {
         </div>
       </div>
     </header>
+
+    <!-- Welcome Message Component -->
+    <div class="welcome-message-card" id="welcome-message-card" hidden>
+      <div class="welcome-message-header" id="welcome-message-header">
+        <h2>Welcome Message</h2>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="welcome-message-content">
+        <div class="markdown-body" id="welcome-message-body"></div>
+        <div class="welcome-message-actions" id="welcome-message-actions">
+          <button class="welcome-message-dismiss" id="welcome-message-dismiss">Dismiss</button>
+        </div>
+      </div>
+    </div>
 
     <div class="card">
       <h2>Your Apps</h2>
@@ -1112,9 +1425,41 @@ export function renderAppsPage(): string {
           <input type="number" name="maxUses" class="small" placeholder="Max" min="1">
         </div>
         <input type="text" name="description" placeholder="Description (optional)">
+        <textarea name="welcomeMessage" placeholder="Welcome message (markdown, optional)"></textarea>
         <button type="submit" class="btn btn-primary btn-small">Add Code</button>
       </form>
     </div>
+
+  <!-- Edit Invite Code Modal -->
+  <div class="edit-code-modal-overlay" id="edit-code-modal" hidden>
+    <div class="edit-code-modal">
+      <button class="edit-code-modal-close" type="button" id="edit-code-close" aria-label="Close">&times;</button>
+      <h2>Edit Invite Code</h2>
+      <form class="edit-code-form" id="edit-code-form">
+        <input type="hidden" name="code" id="edit-code-code">
+        <label>
+          Code
+          <input type="text" id="edit-code-display" disabled>
+        </label>
+        <label>
+          Description
+          <input type="text" name="description" id="edit-code-description">
+        </label>
+        <label>
+          Max Uses
+          <input type="number" name="maxUses" id="edit-code-max-uses" min="1">
+        </label>
+        <label>
+          Welcome Message (Markdown)
+          <textarea name="welcomeMessage" id="edit-code-welcome-message" placeholder="# Welcome!&#10;&#10;Your custom welcome message..."></textarea>
+        </label>
+        <div class="edit-code-actions">
+          <button type="button" id="edit-code-cancel">Cancel</button>
+          <button type="submit" id="edit-code-save">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
   </div>
 
   <!-- Profile Modal -->
@@ -1286,13 +1631,46 @@ export function renderAppsPage(): string {
     const profileEditCancel = document.getElementById('profile-edit-cancel');
     const profileEditSave = document.getElementById('profile-edit-save');
 
+    // Welcome message elements
+    const welcomeMessageCard = document.getElementById('welcome-message-card');
+    const welcomeMessageHeader = document.getElementById('welcome-message-header');
+    const welcomeMessageBody = document.getElementById('welcome-message-body');
+    const welcomeMessageActions = document.getElementById('welcome-message-actions');
+    const welcomeMessageDismiss = document.getElementById('welcome-message-dismiss');
+
     // Get session data
     const npub = sessionStorage.getItem('npub');
     const nsec = sessionStorage.getItem('nsec');
     const onboarded = sessionStorage.getItem('onboarded');
+    const cachedAvatar = sessionStorage.getItem('avatarUrl');
+    const cachedName = sessionStorage.getItem('displayName');
 
     // Current profile data
     let currentProfile = { name: '', about: '', picture: '', nip05: '' };
+
+    // Update header avatar with image or fallback
+    function updateHeaderAvatar(pictureUrl, name) {
+      const fallback = npub ? npub.replace(/^npub1/, '').slice(0, 2).toUpperCase() : '??';
+      if (pictureUrl) {
+        avatarBtn.innerHTML = '<img src="' + pictureUrl + '" alt="' + escapeHtml(name || 'Profile') + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML=\\'' + fallback + '\\'"/>';
+      } else {
+        avatarBtn.innerHTML = '<span id="avatar-fallback">' + fallback + '</span>';
+      }
+    }
+
+    // Cache profile data in sessionStorage
+    function cacheProfile(profile) {
+      if (profile.picture) {
+        sessionStorage.setItem('avatarUrl', profile.picture);
+      } else {
+        sessionStorage.removeItem('avatarUrl');
+      }
+      if (profile.name) {
+        sessionStorage.setItem('displayName', profile.name);
+      } else {
+        sessionStorage.removeItem('displayName');
+      }
+    }
 
     // Validate session - if npub is missing or invalid, clear and redirect
     if (!npub || !npub.startsWith('npub1')) {
@@ -1301,8 +1679,8 @@ export function renderAppsPage(): string {
     } else if (!onboarded) {
       window.location.href = '/onboarding';
     } else {
-      const fallback = npub.replace(/^npub1/, '').slice(0, 2).toUpperCase();
-      avatarFallback.textContent = fallback;
+      // Use cached avatar if available, otherwise show fallback
+      updateHeaderAvatar(cachedAvatar, cachedName);
       userNpubEl.textContent = npub;
     }
 
@@ -1503,6 +1881,145 @@ export function renderAppsPage(): string {
       pinSubmit.textContent = 'Transfer';
     });
 
+    // === Welcome Message Functions ===
+
+    // Simple markdown to HTML converter
+    function parseMarkdown(md) {
+      if (!md) return '';
+
+      // Helper for inline formatting
+      function formatInline(text) {
+        // Bold+italic (***text***)
+        while (text.includes('***')) {
+          const start = text.indexOf('***');
+          const end = text.indexOf('***', start + 3);
+          if (end === -1) break;
+          text = text.slice(0, start) + '<strong><em>' + text.slice(start + 3, end) + '</em></strong>' + text.slice(end + 3);
+        }
+        // Bold (**text**)
+        while (text.includes('**')) {
+          const start = text.indexOf('**');
+          const end = text.indexOf('**', start + 2);
+          if (end === -1) break;
+          text = text.slice(0, start) + '<strong>' + text.slice(start + 2, end) + '</strong>' + text.slice(end + 2);
+        }
+        // Italic (*text*)
+        while (text.includes('*')) {
+          const start = text.indexOf('*');
+          const end = text.indexOf('*', start + 1);
+          if (end === -1) break;
+          text = text.slice(0, start) + '<em>' + text.slice(start + 1, end) + '</em>' + text.slice(end + 1);
+        }
+        // Code (\`text\`)
+        while (text.includes('\`')) {
+          const start = text.indexOf('\`');
+          const end = text.indexOf('\`', start + 1);
+          if (end === -1) break;
+          text = text.slice(0, start) + '<code>' + text.slice(start + 1, end) + '</code>' + text.slice(end + 1);
+        }
+        return text;
+      }
+
+      // Process line by line
+      const lines = md.split(String.fromCharCode(10));
+      let html = '';
+      let inList = false;
+
+      for (let line of lines) {
+        // Escape HTML first
+        line = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // Headers
+        if (line.startsWith('### ')) {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<h3>' + formatInline(line.slice(4)) + '</h3>';
+        } else if (line.startsWith('## ')) {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<h2>' + formatInline(line.slice(3)) + '</h2>';
+        } else if (line.startsWith('# ')) {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<h1>' + formatInline(line.slice(2)) + '</h1>';
+        } else if (line.startsWith('&gt; ')) {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<blockquote>' + formatInline(line.slice(5)) + '</blockquote>';
+        } else if (line.startsWith('- ') || line.startsWith('* ')) {
+          if (!inList) { html += '<ul>'; inList = true; }
+          html += '<li>' + formatInline(line.slice(2)) + '</li>';
+        } else if (line.trim() === '') {
+          if (inList) { html += '</ul>'; inList = false; }
+        } else {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<p>' + formatInline(line) + '</p>';
+        }
+      }
+
+      if (inList) html += '</ul>';
+
+      return html;
+    }
+
+    async function loadWelcomeMessage() {
+      try {
+        const res = await fetch('/api/welcome', {
+          headers: { 'X-Npub': npub }
+        });
+        const data = await res.json();
+
+        if (!data.success || !data.welcomeMessage) {
+          // No welcome message, hide the card
+          welcomeMessageCard.hidden = true;
+          return;
+        }
+
+        // Render markdown
+        welcomeMessageBody.innerHTML = parseMarkdown(data.welcomeMessage);
+        welcomeMessageCard.hidden = false;
+
+        if (data.dismissed) {
+          // Already dismissed - show collapsed
+          welcomeMessageCard.classList.add('collapsed');
+          welcomeMessageActions.hidden = true;
+        } else {
+          // Not dismissed - show expanded
+          welcomeMessageCard.classList.remove('collapsed');
+          welcomeMessageActions.hidden = false;
+        }
+      } catch (err) {
+        console.error('Failed to load welcome message:', err);
+        welcomeMessageCard.hidden = true;
+      }
+    }
+
+    async function dismissWelcomeMessage() {
+      try {
+        const res = await fetch('/api/welcome/dismiss', {
+          method: 'POST',
+          headers: { 'X-Npub': npub }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          // Collapse the card and hide dismiss button
+          welcomeMessageCard.classList.add('collapsed');
+          welcomeMessageActions.hidden = true;
+        }
+      } catch (err) {
+        console.error('Failed to dismiss welcome message:', err);
+      }
+    }
+
+    // Welcome message event listeners
+    welcomeMessageHeader.addEventListener('click', () => {
+      welcomeMessageCard.classList.toggle('collapsed');
+    });
+
+    welcomeMessageDismiss.addEventListener('click', () => {
+      dismissWelcomeMessage();
+    });
+
+    // Load welcome message on page load
+    loadWelcomeMessage();
+
     // Load user apps on page load
     loadUserApps();
 
@@ -1569,6 +2086,10 @@ export function renderAppsPage(): string {
         picture: profile?.picture || '',
         nip05: profile?.nip05 || ''
       };
+
+      // Cache profile and update header avatar
+      cacheProfile(currentProfile);
+      updateHeaderAvatar(currentProfile.picture, currentProfile.name);
 
       // Avatar
       if (currentProfile.picture) {
@@ -1661,10 +2182,7 @@ export function renderAppsPage(): string {
 
         if (published > 0) {
           currentProfile = newProfile;
-          displayProfile(newProfile);
-
-          // Update avatar chip in header if picture changed
-          // (optionally update the header avatar here too)
+          displayProfile(newProfile); // This also caches profile and updates header avatar
 
           profileEditStatus.textContent = 'Profile updated!';
           profileEditStatus.className = 'profile-edit-status success';
@@ -1739,20 +2257,30 @@ export function renderAppsPage(): string {
           return;
         }
 
+        // Store codes data for edit modal
+        window.adminCodesData = {};
+
         inviteCodesList.innerHTML = data.codes.map(code => {
+          // Store code data in JS object
+          window.adminCodesData[code.code] = code;
+
           const usageText = code.max_uses
             ? code.uses + '/' + code.max_uses + ' uses'
             : code.uses + ' uses';
           const statusText = code.active ? '' : ' (disabled)';
           const inactiveClass = code.active ? '' : ' inactive';
+          const welcomeBadge = code.welcome_message
+            ? '<span style="font-size:0.7rem;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;margin-left:6px">Welcome</span>'
+            : '';
 
           return '<div class="invite-code-item' + inactiveClass + '" data-code="' + code.code + '">' +
             '<div class="invite-code-info">' +
-              '<div class="invite-code-text">' + code.code + statusText + '</div>' +
+              '<div class="invite-code-text">' + code.code + statusText + welcomeBadge + '</div>' +
               '<div class="invite-code-meta">' + usageText + (code.description ? ' - ' + code.description : '') + '</div>' +
             '</div>' +
             '<div class="invite-code-actions">' +
               '<button type="button" class="copy-link-btn" data-copy-link="' + code.code + '">Copy Link</button>' +
+              '<button type="button" data-edit-code="' + code.code + '">Edit</button>' +
               '<button type="button" data-toggle="' + code.code + '" data-active="' + code.active + '">' + (code.active ? 'Disable' : 'Enable') + '</button>' +
               '<button type="button" class="delete" data-delete="' + code.code + '">Delete</button>' +
             '</div>' +
@@ -1767,6 +2295,16 @@ export function renderAppsPage(): string {
             navigator.clipboard.writeText(link);
             btn.textContent = 'Copied!';
             setTimeout(() => btn.textContent = 'Copy Link', 2000);
+          });
+        });
+
+        inviteCodesList.querySelectorAll('[data-edit-code]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const code = btn.dataset.editCode;
+            const codeData = window.adminCodesData[code];
+            if (codeData) {
+              showEditCodeModal(codeData);
+            }
           });
         });
 
@@ -1793,7 +2331,7 @@ export function renderAppsPage(): string {
       }
     }
 
-    async function createCode(code, description, maxUses) {
+    async function createCode(code, description, maxUses, welcomeMessage) {
       try {
         const res = await fetch('/admin/codes', {
           method: 'POST',
@@ -1801,7 +2339,7 @@ export function renderAppsPage(): string {
             'Content-Type': 'application/json',
             'X-Npub': npub
           },
-          body: JSON.stringify({ code, description, maxUses })
+          body: JSON.stringify({ code, description, maxUses, welcomeMessage })
         });
         const data = await res.json();
 
@@ -1815,6 +2353,32 @@ export function renderAppsPage(): string {
       } catch (err) {
         console.error('Failed to create code:', err);
         alert('Failed to create code');
+        return false;
+      }
+    }
+
+    async function updateCode(code, description, maxUses, welcomeMessage) {
+      try {
+        const res = await fetch('/admin/codes/' + encodeURIComponent(code), {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Npub': npub
+          },
+          body: JSON.stringify({ description, maxUses, welcomeMessage })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          loadInviteCodes();
+          return true;
+        } else {
+          alert(data.error || 'Failed to update code');
+          return false;
+        }
+      } catch (err) {
+        console.error('Failed to update code:', err);
+        alert('Failed to update code');
         return false;
       }
     }
@@ -1893,15 +2457,21 @@ export function renderAppsPage(): string {
           const teleportBadge = app.teleport_pubkey
             ? '<span style="font-size:0.7rem;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;margin-left:6px">Teleport</span>'
             : '';
+          const isVisible = app.visible === 1;
+          const hiddenClass = isVisible ? '' : ' hidden-app';
+          const visibilityBadge = isVisible
+            ? ''
+            : '<span style="font-size:0.7rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;margin-left:6px">Hidden</span>';
 
-          return '<div class="app-admin-item" data-app-id="' + app.id + '">' +
+          return '<div class="app-admin-item' + hiddenClass + '" data-app-id="' + app.id + '">' +
             '<div class="app-admin-icon">' + iconHtml + '</div>' +
             '<div class="app-admin-info">' +
-              '<div class="app-admin-name">' + escapeHtml(app.name) + teleportBadge + '</div>' +
+              '<div class="app-admin-name">' + escapeHtml(app.name) + teleportBadge + visibilityBadge + '</div>' +
               '<div class="app-admin-url">' + escapeHtml(app.url) + '</div>' +
               (app.description ? '<div class="app-admin-desc">' + escapeHtml(app.description) + '</div>' : '') +
             '</div>' +
             '<div class="invite-code-actions">' +
+              '<button type="button" data-toggle-app="' + app.id + '" data-visible="' + (isVisible ? '1' : '0') + '">' + (isVisible ? 'Hide' : 'Show') + '</button>' +
               '<button type="button" data-edit-app="' + app.id + '">Edit</button>' +
               '<button type="button" class="delete" data-delete-app="' + app.id + '">Delete</button>' +
             '</div>' +
@@ -1909,6 +2479,14 @@ export function renderAppsPage(): string {
         }).join('');
 
         // Add event listeners
+        appsAdminList.querySelectorAll('[data-toggle-app]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = parseInt(btn.dataset.toggleApp, 10);
+            const currentVisible = btn.dataset.visible === '1';
+            await toggleApp(id, !currentVisible);
+          });
+        });
+
         appsAdminList.querySelectorAll('[data-edit-app]').forEach(btn => {
           btn.addEventListener('click', () => {
             const appId = parseInt(btn.dataset.editApp, 10);
@@ -1980,6 +2558,86 @@ export function renderAppsPage(): string {
         alert('Failed to delete app');
       }
     }
+
+    async function toggleApp(id, visible) {
+      try {
+        const res = await fetch('/admin/apps/' + id + '/toggle', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Npub': npub
+          },
+          body: JSON.stringify({ visible })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          loadApps();
+          loadUserApps(); // Refresh user apps list too
+        } else {
+          alert(data.error || 'Failed to toggle app visibility');
+        }
+      } catch (err) {
+        console.error('Failed to toggle app:', err);
+        alert('Failed to toggle app visibility');
+      }
+    }
+
+    // Edit invite code modal elements
+    const editCodeModal = document.getElementById('edit-code-modal');
+    const editCodeCloseBtn = document.getElementById('edit-code-close');
+    const editCodeForm = document.getElementById('edit-code-form');
+    const editCodeCode = document.getElementById('edit-code-code');
+    const editCodeDisplay = document.getElementById('edit-code-display');
+    const editCodeDescription = document.getElementById('edit-code-description');
+    const editCodeMaxUses = document.getElementById('edit-code-max-uses');
+    const editCodeWelcomeMessage = document.getElementById('edit-code-welcome-message');
+    const editCodeCancel = document.getElementById('edit-code-cancel');
+    const editCodeSave = document.getElementById('edit-code-save');
+
+    // Edit invite code modal functions
+    function showEditCodeModal(codeData) {
+      editCodeCode.value = codeData.code;
+      editCodeDisplay.value = codeData.code;
+      editCodeDescription.value = codeData.description || '';
+      editCodeMaxUses.value = codeData.max_uses || '';
+      editCodeWelcomeMessage.value = codeData.welcome_message || '';
+      editCodeSave.disabled = false;
+      editCodeSave.textContent = 'Save Changes';
+      editCodeModal.hidden = false;
+    }
+
+    function hideEditCodeModal() {
+      editCodeModal.hidden = true;
+    }
+
+    // Edit code modal event listeners
+    editCodeCloseBtn.addEventListener('click', hideEditCodeModal);
+    editCodeCancel.addEventListener('click', hideEditCodeModal);
+
+    editCodeModal.addEventListener('click', (e) => {
+      if (e.target === editCodeModal) {
+        hideEditCodeModal();
+      }
+    });
+
+    editCodeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = editCodeCode.value;
+      const description = editCodeDescription.value.trim();
+      const maxUses = editCodeMaxUses.value;
+      const welcomeMessage = editCodeWelcomeMessage.value.trim();
+
+      editCodeSave.disabled = true;
+      editCodeSave.textContent = 'Saving...';
+
+      if (await updateCode(code, description || null, maxUses || null, welcomeMessage || null)) {
+        hideEditCodeModal();
+      }
+
+      editCodeSave.disabled = false;
+      editCodeSave.textContent = 'Save Changes';
+    });
 
     // Edit app modal functions
     function showEditAppModal(app) {
@@ -2067,8 +2725,9 @@ export function renderAppsPage(): string {
         const code = addCodeForm.elements.code.value.trim();
         const description = addCodeForm.elements.description.value.trim();
         const maxUses = addCodeForm.elements.maxUses.value;
+        const welcomeMessage = addCodeForm.elements.welcomeMessage.value.trim();
 
-        if (await createCode(code, description || null, maxUses || null)) {
+        if (await createCode(code, description || null, maxUses || null, welcomeMessage || null)) {
           addCodeForm.reset();
         }
       });

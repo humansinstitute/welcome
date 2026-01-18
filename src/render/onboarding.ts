@@ -354,21 +354,15 @@ export function renderOnboardingPage(): string {
         </h1>
 
         <p class="wizard-text">
-          On Nostr you decide to be whoever you want.
+          Other Stuff uses the Open Nostr network for an ID you control.
         </p>
 
         <p class="wizard-text">
-          A profile usually includes a name and picture, but <strong>it's all optional</strong>.
-          Feel free to stay anonymous or use a nickname — you can always change it later.
+          A profile usually includes a name and picture, but <strong>it's all optional</strong>. Feel free to stay anonymous or use a nickname — you can always change it later.
         </p>
 
         <p class="wizard-text">
           <strong>Remember:</strong> online privacy matters. Don't share sensitive personal data.
-        </p>
-
-        <p class="wizard-text">
-          The best part? No email, phone number, or identifying information required.
-          Your cryptographic key is your only identity.
         </p>
       </div>
 
@@ -411,7 +405,7 @@ export function renderOnboardingPage(): string {
             autocomplete="off"
           >
           <p class="form-note">
-            Names aren't unique on Nostr — be whoever you want to be.
+            The names don't have to be unique — be whoever you want to be.
           </p>
         </div>
 
@@ -600,6 +594,14 @@ export function renderOnboardingPage(): string {
             window.location.href = '/apps';
           }, 2000);
           return;
+        }
+
+        // Cache the profile data for display in header
+        if (picture) {
+          sessionStorage.setItem('avatarUrl', picture);
+        }
+        if (name) {
+          sessionStorage.setItem('displayName', name);
         }
       }
 

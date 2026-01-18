@@ -7,18 +7,24 @@ import { handleSignup, handleRecover } from "./routes/auth.ts";
 import {
   handleGetInviteCodes,
   handleCreateInviteCode,
+  handleUpdateInviteCode,
   handleDeleteInviteCode,
   handleToggleInviteCode,
   handleGetApps,
   handleCreateApp,
   handleUpdateApp,
   handleDeleteApp,
+  handleToggleApp,
 } from "./routes/admin.ts";
 import {
   handleStoreTeleportKey,
   handleGetTeleportKey,
   handleGetPublicApps,
 } from "./routes/teleport.ts";
+import {
+  handleGetWelcome,
+  handleDismissWelcome,
+} from "./routes/welcome.ts";
 
 console.log(`Starting ${APP_NAME}...`);
 console.log(`Mode: ${IS_DEV ? "development" : "production"}`);
@@ -74,7 +80,12 @@ const server = Bun.serve({
       return handleCreateInviteCode(req);
     }
 
-    if (path.startsWith("/admin/codes/") && method === "DELETE") {
+    if (path.startsWith("/admin/codes/") && !path.endsWith("/toggle") && method === "PUT") {
+      const code = decodeURIComponent(path.split("/admin/codes/")[1]);
+      return handleUpdateInviteCode(req, code);
+    }
+
+    if (path.startsWith("/admin/codes/") && !path.endsWith("/toggle") && method === "DELETE") {
       const code = decodeURIComponent(path.split("/admin/codes/")[1]);
       return handleDeleteInviteCode(req, code);
     }
@@ -91,6 +102,13 @@ const server = Bun.serve({
 
     if (path === "/admin/apps" && method === "POST") {
       return handleCreateApp(req);
+    }
+
+    if (path.startsWith("/admin/apps/") && path.endsWith("/toggle") && method === "POST") {
+      const id = parseInt(path.replace("/admin/apps/", "").replace("/toggle", ""), 10);
+      if (!isNaN(id)) {
+        return handleToggleApp(req, id);
+      }
     }
 
     if (path.startsWith("/admin/apps/") && method === "PUT") {
@@ -110,6 +128,14 @@ const server = Bun.serve({
     // API routes
     if (path === "/api/apps" && method === "GET") {
       return handleGetPublicApps(req);
+    }
+
+    if (path === "/api/welcome" && method === "GET") {
+      return handleGetWelcome(req);
+    }
+
+    if (path === "/api/welcome/dismiss" && method === "POST") {
+      return handleDismissWelcome(req);
     }
 
     // Teleport key routes

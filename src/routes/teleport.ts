@@ -1,5 +1,5 @@
 import { nip19, nip44, finalizeEvent, getPublicKey } from "nostr-tools";
-import { getTeleportKey, deleteTeleportKey, storeTeleportKey, getAllApps, getAppById } from "../db.ts";
+import { getTeleportKey, deleteTeleportKey, storeTeleportKey, getVisibleApps, getAppById } from "../db.ts";
 import { TELEPORT_EXPIRY_SECONDS, WELCOME_PRIVKEY } from "../config.ts";
 
 // Helper to convert hex string to Uint8Array
@@ -49,7 +49,7 @@ function decodeTeleportPubkey(pubkey: string): string | null {
   return null;
 }
 
-// GET /api/apps - Get all apps for authenticated users
+// GET /api/apps - Get visible apps for authenticated users
 export async function handleGetPublicApps(req: Request): Promise<Response> {
   try {
     const npub = req.headers.get("X-Npub");
@@ -60,7 +60,8 @@ export async function handleGetPublicApps(req: Request): Promise<Response> {
       );
     }
 
-    const apps = getAllApps();
+    // Only return visible apps to regular users
+    const apps = getVisibleApps();
     return Response.json({ success: true, apps });
   } catch (err) {
     console.error("Get apps error:", err);

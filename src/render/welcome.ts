@@ -1,4 +1,4 @@
-import { APP_NAME } from "../config.ts";
+import { APP_NAME, NOSTR_RELAYS } from "../config.ts";
 
 export function renderWelcomePage(): string {
   return `<!DOCTYPE html>
@@ -534,6 +534,9 @@ export function renderWelcomePage(): string {
   <script type="module">
     import { generateSecretKey, getPublicKey, nip19 } from 'https://esm.sh/nostr-tools@2.7.2';
     import { encrypt as nip49Encrypt, decrypt as nip49Decrypt } from 'https://esm.sh/nostr-tools@2.7.2/nip49';
+    import { Relay } from 'https://esm.sh/nostr-tools@2.7.2/relay';
+
+    const RELAYS = ${JSON.stringify(NOSTR_RELAYS)};
 
     const inviteInput = document.getElementById('invite-code');
     const btnSignup = document.getElementById('btn-signup');
@@ -572,6 +575,58 @@ export function renderWelcomePage(): string {
     const loginSubmit = document.getElementById('login-submit');
 
     let currentInviteCode = null;
+
+    // Fetch profile from relays and cache avatar/name in sessionStorage
+    async function fetchAndCacheProfile(npub) {
+      try {
+        const { type, data: pubkey } = nip19.decode(npub);
+        if (type !== 'npub') return;
+
+        for (const url of RELAYS) {
+          try {
+            const relay = await Relay.connect(url);
+
+            const profile = await new Promise((resolve, reject) => {
+              let found = null;
+              const timeout = setTimeout(() => {
+                relay.close();
+                resolve(found);
+              }, 3000);
+
+              relay.subscribe([
+                { kinds: [0], authors: [pubkey], limit: 1 }
+              ], {
+                onevent(event) {
+                  try {
+                    found = JSON.parse(event.content);
+                  } catch (e) {}
+                },
+                oneose() {
+                  clearTimeout(timeout);
+                  relay.close();
+                  resolve(found);
+                }
+              });
+            });
+
+            if (profile) {
+              // Cache the profile data
+              if (profile.picture) {
+                sessionStorage.setItem('avatarUrl', profile.picture);
+              }
+              if (profile.name) {
+                sessionStorage.setItem('displayName', profile.name);
+              }
+              return; // Found profile, done
+            }
+          } catch (err) {
+            console.warn('Failed to fetch profile from', url);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch profile:', err);
+      }
+    }
 
     function validateCode() {
       const code = inviteInput.value.trim();
@@ -770,6 +825,10 @@ export function renderWelcomePage(): string {
         sessionStorage.setItem('nsec', nsec);
         sessionStorage.setItem('onboarded', 'true');
 
+        // Fetch and cache profile avatar before redirect
+        loginSubmit.textContent = 'Loading profile...';
+        await fetchAndCacheProfile(data.npub);
+
         // Redirect to apps
         window.location.href = '/apps';
 
@@ -799,6 +858,9 @@ export function renderWelcomePage(): string {
         sessionStorage.setItem('npub', npub);
         sessionStorage.setItem('loginMethod', 'extension');
         sessionStorage.setItem('onboarded', 'true');
+
+        // Fetch and cache profile avatar
+        await fetchAndCacheProfile(npub);
 
         window.location.href = '/apps';
       } catch (err) {
@@ -848,6 +910,9 @@ export function renderWelcomePage(): string {
         sessionStorage.setItem('npub', npub);
         sessionStorage.setItem('nsec', secret);
         sessionStorage.setItem('onboarded', 'true');
+
+        // Fetch and cache profile avatar
+        await fetchAndCacheProfile(npub);
 
         window.location.href = '/apps';
       } catch (err) {
