@@ -1,0 +1,87 @@
+# Reference code (not part of this project)
+reference/
+
+# Dependencies
+node_modules/
+.worktrees/
+
+# Package managers
+bun.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+data/
+dbs/
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Database backups
+*.bak
+*.backup
+*.dump
+backups/
+db-backups/
+
+# Runtime/logs
+*.log
+logs/
+*.pid
+
+# Build output
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Environment & secrets - NEVER COMMIT
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+credentials/
+.secrets
+*.nsec
+*nsec*
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# Uploaded files
+public/uploads/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Local config (user-specific)
+*.local
+config.local.*

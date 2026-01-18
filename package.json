@@ -1,0 +1,21 @@
+{
+  "name": "welcome-os",
+  "version": "0.1.0",
+  "description": "Nostr onboarding app for Others Stuff members",
+  "scripts": {
+    "setup": "bun install",
+    "start": "bun run src/server.ts",
+    "dev": "bun --hot run src/server.ts",
+    "reset-db": "rm -f welcome.sqlite",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "applesauce-core": "4.0.0",
+    "applesauce-relay": "4.0.0",
+    "bun-types": "latest",
+    "nostr-tools": "2.7.2",
+    "rxjs": "7.8.1"
+  },
+  "type": "module",
+  "license": "MIT"
+}
