@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 
 import { DB_PATH, DEFAULT_INVITE_CODES, TELEPORT_EXPIRY_SECONDS } from "./config.ts";
-import type { User, App, UserApp, OnboardingStatus, InviteCode, TeleportKey } from "./types.ts";
+import type { User, App, UserApp, OnboardingStatus, InviteCode, TeleportKey, Group, UserGroup, InviteCodeGroup, AppGroup, UserGroupInfo, InviteCodeAppCode } from "./types.ts";
 
 const db = new Database(DB_PATH);
 
@@ -97,6 +97,81 @@ db.run(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Groups table
+db.run(`
+  CREATE TABLE IF NOT EXISTS groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT DEFAULT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+// User-Groups junction table
+db.run(`
+  CREATE TABLE IF NOT EXISTS user_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    source TEXT NOT NULL DEFAULT 'admin',
+    source_code TEXT DEFAULT NULL,
+    assigned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    UNIQUE(user_id, group_id)
+  )
+`);
+
+// Invite Code-Groups junction table
+db.run(`
+  CREATE TABLE IF NOT EXISTS invite_code_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    invite_code_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (invite_code_id) REFERENCES invite_codes(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    UNIQUE(invite_code_id, group_id)
+  )
+`);
+
+// App-Groups junction table
+db.run(`
+  CREATE TABLE IF NOT EXISTS app_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (app_id) REFERENCES apps(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    UNIQUE(app_id, group_id)
+  )
+`);
+
+// Invite Code-App Codes junction table (external app invite codes linked to Welcome invites)
+db.run(`
+  CREATE TABLE IF NOT EXISTS invite_code_app_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    invite_code_id INTEGER NOT NULL,
+    app_id INTEGER NOT NULL,
+    external_code TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (invite_code_id) REFERENCES invite_codes(id) ON DELETE CASCADE,
+    FOREIGN KEY (app_id) REFERENCES apps(id) ON DELETE CASCADE,
+    UNIQUE(invite_code_id, app_id)
+  )
+`);
+
+// Create indexes for efficient lookups
+db.run("CREATE INDEX IF NOT EXISTS idx_user_groups_user ON user_groups(user_id)");
+db.run("CREATE INDEX IF NOT EXISTS idx_user_groups_group ON user_groups(group_id)");
+db.run("CREATE INDEX IF NOT EXISTS idx_app_groups_app ON app_groups(app_id)");
+db.run("CREATE INDEX IF NOT EXISTS idx_app_groups_group ON app_groups(group_id)");
+db.run("CREATE INDEX IF NOT EXISTS idx_invite_code_groups_code ON invite_code_groups(invite_code_id)");
+db.run("CREATE INDEX IF NOT EXISTS idx_invite_code_app_codes_code ON invite_code_app_codes(invite_code_id)");
+db.run("CREATE INDEX IF NOT EXISTS idx_invite_code_app_codes_app ON invite_code_app_codes(app_id)");
 
 // Seed default invite codes if table is empty
 const codeCount = db.query<{ count: number }, []>("SELECT COUNT(*) as count FROM invite_codes").get();
@@ -421,4 +496,468 @@ export function cleanupExpiredTeleportKeys(): number {
   const now = Math.floor(Date.now() / 1000);
   const result = cleanupExpiredKeysStmt.run(now);
   return result.changes;
+}
+
+// ============================================
+// Group Functions
+// ============================================
+
+// Prepared statements - Groups
+const getAllGroupsStmt = db.query<Group, []>(
+  "SELECT * FROM groups ORDER BY created_at DESC"
+);
+const getActiveGroupsStmt = db.query<Group, []>(
+  "SELECT * FROM groups WHERE active = 1 ORDER BY name ASC"
+);
+const getGroupByIdStmt = db.query<Group, [number]>(
+  "SELECT * FROM groups WHERE id = ?"
+);
+const getGroupByNameStmt = db.query<Group, [string]>(
+  "SELECT * FROM groups WHERE name = ?"
+);
+const createGroupStmt = db.query<Group, [string, string | null]>(
+  `INSERT INTO groups (name, description) VALUES (?, ?) RETURNING *`
+);
+const updateGroupStmt = db.query<Group, [string, string | null, number]>(
+  `UPDATE groups SET name = ?, description = ? WHERE id = ? RETURNING *`
+);
+const deleteGroupStmt = db.prepare("DELETE FROM groups WHERE id = ?");
+const toggleGroupStmt = db.query<Group, [number, number]>(
+  `UPDATE groups SET active = ? WHERE id = ? RETURNING *`
+);
+
+export function getAllGroups(): Group[] {
+  return getAllGroupsStmt.all();
+}
+
+export function getActiveGroups(): Group[] {
+  return getActiveGroupsStmt.all();
+}
+
+export function getGroupById(id: number): Group | null {
+  if (!id) return null;
+  const group = getGroupByIdStmt.get(id) as Group | undefined;
+  return group ?? null;
+}
+
+export function getGroupByName(name: string): Group | null {
+  if (!name) return null;
+  const group = getGroupByNameStmt.get(name) as Group | undefined;
+  return group ?? null;
+}
+
+export function createGroup(name: string, description: string | null = null): Group | null {
+  if (!name) return null;
+  try {
+    const group = createGroupStmt.get(name.trim(), description?.trim() || null) as Group | undefined;
+    return group ?? null;
+  } catch {
+    return null; // Name already exists
+  }
+}
+
+export function updateGroup(id: number, name: string, description: string | null = null): Group | null {
+  if (!id || !name) return null;
+  try {
+    const group = updateGroupStmt.get(name.trim(), description?.trim() || null, id) as Group | undefined;
+    return group ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function deleteGroup(id: number): boolean {
+  if (!id) return false;
+  // Junction tables will cascade delete due to foreign key constraints
+  const result = deleteGroupStmt.run(id);
+  return result.changes > 0;
+}
+
+export function toggleGroup(id: number, active: boolean): Group | null {
+  if (!id) return null;
+  const group = toggleGroupStmt.get(active ? 1 : 0, id) as Group | undefined;
+  return group ?? null;
+}
+
+// ============================================
+// User-Group Functions
+// ============================================
+
+const getUserGroupsStmt = db.query<UserGroupInfo, [number]>(
+  `SELECT ug.group_id, g.name as group_name, ug.source, ug.assigned_at
+   FROM user_groups ug
+   JOIN groups g ON ug.group_id = g.id
+   WHERE ug.user_id = ?
+   ORDER BY ug.assigned_at DESC`
+);
+
+const getUserGroupsByNpubStmt = db.query<UserGroupInfo, [string]>(
+  `SELECT ug.group_id, g.name as group_name, ug.source, ug.assigned_at
+   FROM user_groups ug
+   JOIN groups g ON ug.group_id = g.id
+   JOIN users u ON ug.user_id = u.id
+   WHERE u.npub = ?
+   ORDER BY ug.assigned_at DESC`
+);
+
+const addUserToGroupStmt = db.prepare(
+  `INSERT OR IGNORE INTO user_groups (user_id, group_id, source, source_code) VALUES (?, ?, ?, ?)`
+);
+
+const removeUserFromGroupStmt = db.prepare(
+  `DELETE FROM user_groups WHERE user_id = ? AND group_id = ?`
+);
+
+const getUsersInGroupStmt = db.query<User, [number]>(
+  `SELECT u.* FROM users u
+   JOIN user_groups ug ON u.id = ug.user_id
+   WHERE ug.group_id = ?
+   ORDER BY u.created_at DESC`
+);
+
+export function getUserGroups(userId: number): UserGroupInfo[] {
+  if (!userId) return [];
+  return getUserGroupsStmt.all(userId);
+}
+
+export function getUserGroupsByNpub(npub: string): UserGroupInfo[] {
+  if (!npub) return [];
+  return getUserGroupsByNpubStmt.all(npub);
+}
+
+export function addUserToGroup(
+  userId: number,
+  groupId: number,
+  source: "admin" | "invite_code" = "admin",
+  sourceCode: string | null = null
+): boolean {
+  if (!userId || !groupId) return false;
+  try {
+    const result = addUserToGroupStmt.run(userId, groupId, source, sourceCode);
+    return result.changes > 0;
+  } catch {
+    return false;
+  }
+}
+
+export function removeUserFromGroup(userId: number, groupId: number): boolean {
+  if (!userId || !groupId) return false;
+  const result = removeUserFromGroupStmt.run(userId, groupId);
+  return result.changes > 0;
+}
+
+export function getUsersInGroup(groupId: number): User[] {
+  if (!groupId) return [];
+  return getUsersInGroupStmt.all(groupId);
+}
+
+// ============================================
+// Invite Code-Group Functions
+// ============================================
+
+const getInviteCodeGroupsStmt = db.query<Group, [number]>(
+  `SELECT g.* FROM groups g
+   JOIN invite_code_groups icg ON g.id = icg.group_id
+   WHERE icg.invite_code_id = ?
+   ORDER BY g.name ASC`
+);
+
+const getGroupsForInviteCodeByCodeStmt = db.query<Group, [string]>(
+  `SELECT g.* FROM groups g
+   JOIN invite_code_groups icg ON g.id = icg.group_id
+   JOIN invite_codes ic ON icg.invite_code_id = ic.id
+   WHERE ic.code = ?
+   ORDER BY g.name ASC`
+);
+
+const addGroupToInviteCodeStmt = db.prepare(
+  `INSERT OR IGNORE INTO invite_code_groups (invite_code_id, group_id) VALUES (?, ?)`
+);
+
+const removeGroupFromInviteCodeStmt = db.prepare(
+  `DELETE FROM invite_code_groups WHERE invite_code_id = ? AND group_id = ?`
+);
+
+const clearInviteCodeGroupsStmt = db.prepare(
+  `DELETE FROM invite_code_groups WHERE invite_code_id = ?`
+);
+
+export function getInviteCodeGroups(inviteCodeId: number): Group[] {
+  if (!inviteCodeId) return [];
+  return getInviteCodeGroupsStmt.all(inviteCodeId);
+}
+
+export function getGroupsForInviteCode(code: string): Group[] {
+  if (!code) return [];
+  return getGroupsForInviteCodeByCodeStmt.all(code);
+}
+
+export function setInviteCodeGroups(inviteCodeId: number, groupIds: number[]): boolean {
+  if (!inviteCodeId) return false;
+  try {
+    clearInviteCodeGroupsStmt.run(inviteCodeId);
+    for (const groupId of groupIds) {
+      addGroupToInviteCodeStmt.run(inviteCodeId, groupId);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function addGroupToInviteCode(inviteCodeId: number, groupId: number): boolean {
+  if (!inviteCodeId || !groupId) return false;
+  try {
+    const result = addGroupToInviteCodeStmt.run(inviteCodeId, groupId);
+    return result.changes > 0;
+  } catch {
+    return false;
+  }
+}
+
+export function removeGroupFromInviteCode(inviteCodeId: number, groupId: number): boolean {
+  if (!inviteCodeId || !groupId) return false;
+  const result = removeGroupFromInviteCodeStmt.run(inviteCodeId, groupId);
+  return result.changes > 0;
+}
+
+// ============================================
+// App-Group Functions
+// ============================================
+
+const getAppGroupsStmt = db.query<Group, [number]>(
+  `SELECT g.* FROM groups g
+   JOIN app_groups ag ON g.id = ag.group_id
+   WHERE ag.app_id = ?
+   ORDER BY g.name ASC`
+);
+
+const addGroupToAppStmt = db.prepare(
+  `INSERT OR IGNORE INTO app_groups (app_id, group_id) VALUES (?, ?)`
+);
+
+const removeGroupFromAppStmt = db.prepare(
+  `DELETE FROM app_groups WHERE app_id = ? AND group_id = ?`
+);
+
+const clearAppGroupsStmt = db.prepare(
+  `DELETE FROM app_groups WHERE app_id = ?`
+);
+
+const getAppsInGroupStmt = db.query<App, [number]>(
+  `SELECT a.* FROM apps a
+   JOIN app_groups ag ON a.id = ag.app_id
+   WHERE ag.group_id = ?
+   ORDER BY a.name ASC`
+);
+
+export function getAppGroups(appId: number): Group[] {
+  if (!appId) return [];
+  return getAppGroupsStmt.all(appId);
+}
+
+export function setAppGroups(appId: number, groupIds: number[]): boolean {
+  if (!appId) return false;
+  try {
+    clearAppGroupsStmt.run(appId);
+    for (const groupId of groupIds) {
+      addGroupToAppStmt.run(appId, groupId);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function addGroupToApp(appId: number, groupId: number): boolean {
+  if (!appId || !groupId) return false;
+  try {
+    const result = addGroupToAppStmt.run(appId, groupId);
+    return result.changes > 0;
+  } catch {
+    return false;
+  }
+}
+
+export function removeGroupFromApp(appId: number, groupId: number): boolean {
+  if (!appId || !groupId) return false;
+  const result = removeGroupFromAppStmt.run(appId, groupId);
+  return result.changes > 0;
+}
+
+export function getAppsInGroup(groupId: number): App[] {
+  if (!groupId) return [];
+  return getAppsInGroupStmt.all(groupId);
+}
+
+// ============================================
+// Group-Aware App Visibility
+// ============================================
+
+// Get apps visible to a user based on their group memberships
+// Apps with no group restrictions (no entries in app_groups) are visible to all
+// Apps with group restrictions are only visible if user is in at least one of those groups
+const getVisibleAppsForNpubStmt = db.query<App, [string]>(
+  `SELECT DISTINCT a.* FROM apps a
+   WHERE a.visible = 1
+   AND (
+     -- No group restrictions (app has no entries in app_groups)
+     NOT EXISTS (SELECT 1 FROM app_groups ag WHERE ag.app_id = a.id)
+     OR
+     -- User is in at least one of the app's groups
+     EXISTS (
+       SELECT 1 FROM app_groups ag
+       JOIN user_groups ug ON ag.group_id = ug.group_id
+       JOIN users u ON ug.user_id = u.id
+       WHERE ag.app_id = a.id AND u.npub = ?
+     )
+   )
+   ORDER BY a.created_at DESC`
+);
+
+export function getVisibleAppsForNpub(npub: string): App[] {
+  if (!npub) return [];
+  return getVisibleAppsForNpubStmt.all(npub);
+}
+
+// ============================================
+// App by Teleport Pubkey (for external API auth)
+// ============================================
+
+const getAppByTeleportPubkeyStmt = db.query<App, [string]>(
+  `SELECT * FROM apps WHERE teleport_pubkey = ?`
+);
+
+export function getAppByTeleportPubkey(pubkey: string): App | null {
+  if (!pubkey) return null;
+  const app = getAppByTeleportPubkeyStmt.get(pubkey) as App | undefined;
+  return app ?? null;
+}
+
+// ============================================
+// Invite Code App Codes Functions
+// (External app invite codes linked to Welcome invites)
+// ============================================
+
+// Get all app codes for an invite code (for admin UI)
+const getInviteCodeAppCodesStmt = db.query<InviteCodeAppCode & { app_name: string; app_url: string }, [number]>(
+  `SELECT icac.*, a.name as app_name, a.url as app_url
+   FROM invite_code_app_codes icac
+   JOIN apps a ON icac.app_id = a.id
+   WHERE icac.invite_code_id = ?
+   ORDER BY a.name ASC`
+);
+
+// Get app code for a specific invite code and app
+const getInviteCodeAppCodeStmt = db.query<InviteCodeAppCode, [number, number]>(
+  `SELECT * FROM invite_code_app_codes WHERE invite_code_id = ? AND app_id = ?`
+);
+
+// Get app code for a user's invite code and a specific app (for external API)
+const getUserAppInviteCodeStmt = db.query<{ external_code: string }, [string, number]>(
+  `SELECT icac.external_code
+   FROM invite_code_app_codes icac
+   JOIN invite_codes ic ON icac.invite_code_id = ic.id
+   JOIN users u ON u.invite_code = ic.code
+   WHERE u.npub = ? AND icac.app_id = ?`
+);
+
+// Set or update an app code for an invite code
+const upsertInviteCodeAppCodeStmt = db.query<InviteCodeAppCode, [number, number, string]>(
+  `INSERT INTO invite_code_app_codes (invite_code_id, app_id, external_code)
+   VALUES (?, ?, ?)
+   ON CONFLICT(invite_code_id, app_id) DO UPDATE SET external_code = excluded.external_code
+   RETURNING *`
+);
+
+// Delete an app code from an invite code
+const deleteInviteCodeAppCodeStmt = db.prepare(
+  `DELETE FROM invite_code_app_codes WHERE invite_code_id = ? AND app_id = ?`
+);
+
+// Clear all app codes for an invite code
+const clearInviteCodeAppCodesStmt = db.prepare(
+  `DELETE FROM invite_code_app_codes WHERE invite_code_id = ?`
+);
+
+// Get all apps that have teleport_pubkey set (for admin UI dropdown)
+const getAppsWithTeleportStmt = db.query<App, []>(
+  `SELECT * FROM apps WHERE teleport_pubkey IS NOT NULL AND teleport_pubkey != '' ORDER BY name ASC`
+);
+
+export function getInviteCodeAppCodes(inviteCodeId: number): (InviteCodeAppCode & { app_name: string; app_url: string })[] {
+  if (!inviteCodeId) return [];
+  return getInviteCodeAppCodesStmt.all(inviteCodeId);
+}
+
+export function getInviteCodeAppCode(inviteCodeId: number, appId: number): InviteCodeAppCode | null {
+  if (!inviteCodeId || !appId) return null;
+  const code = getInviteCodeAppCodeStmt.get(inviteCodeId, appId) as InviteCodeAppCode | undefined;
+  return code ?? null;
+}
+
+export function getUserAppInviteCode(npub: string, appId: number): string | null {
+  if (!npub || !appId) return null;
+  const result = getUserAppInviteCodeStmt.get(npub, appId) as { external_code: string } | undefined;
+  return result?.external_code ?? null;
+}
+
+// Get user's welcome message (from their signup invite code)
+const getUserWelcomeMessageStmt = db.query<{ welcome_message: string | null }, [string]>(
+  `SELECT ic.welcome_message
+   FROM invite_codes ic
+   JOIN users u ON u.invite_code = ic.code
+   WHERE u.npub = ?`
+);
+
+// Get all invite codes for a user (from their signup invite code)
+const getAllUserAppInviteCodesStmt = db.query<{ app_id: number; app_name: string; external_code: string }, [string]>(
+  `SELECT icac.app_id, a.name as app_name, icac.external_code
+   FROM invite_code_app_codes icac
+   JOIN invite_codes ic ON icac.invite_code_id = ic.id
+   JOIN users u ON u.invite_code = ic.code
+   JOIN apps a ON icac.app_id = a.id
+   WHERE u.npub = ?
+   ORDER BY a.name ASC`
+);
+
+export function getUserWelcomeMessage(npub: string): string | null {
+  if (!npub) return null;
+  const result = getUserWelcomeMessageStmt.get(npub) as { welcome_message: string | null } | undefined;
+  return result?.welcome_message ?? null;
+}
+
+export function getAllUserAppInviteCodes(npub: string): { app_id: number; app_name: string; external_code: string }[] {
+  if (!npub) return [];
+  return getAllUserAppInviteCodesStmt.all(npub);
+}
+
+export function setInviteCodeAppCode(
+  inviteCodeId: number,
+  appId: number,
+  externalCode: string
+): InviteCodeAppCode | null {
+  if (!inviteCodeId || !appId || !externalCode) return null;
+  try {
+    const code = upsertInviteCodeAppCodeStmt.get(inviteCodeId, appId, externalCode.trim()) as InviteCodeAppCode | undefined;
+    return code ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function deleteInviteCodeAppCode(inviteCodeId: number, appId: number): boolean {
+  if (!inviteCodeId || !appId) return false;
+  const result = deleteInviteCodeAppCodeStmt.run(inviteCodeId, appId);
+  return result.changes > 0;
+}
+
+export function clearInviteCodeAppCodes(inviteCodeId: number): boolean {
+  if (!inviteCodeId) return false;
+  clearInviteCodeAppCodesStmt.run(inviteCodeId);
+  return true;
+}
+
+export function getAppsWithTeleport(): App[] {
+  return getAppsWithTeleportStmt.all();
 }

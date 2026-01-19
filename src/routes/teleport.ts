@@ -1,5 +1,5 @@
 import { nip19, nip44, finalizeEvent, getPublicKey } from "nostr-tools";
-import { getTeleportKey, deleteTeleportKey, storeTeleportKey, getVisibleApps, getAppById } from "../db.ts";
+import { getTeleportKey, deleteTeleportKey, storeTeleportKey, getVisibleAppsForNpub, getAppById } from "../db.ts";
 import { TELEPORT_EXPIRY_SECONDS, WELCOME_PRIVKEY } from "../config.ts";
 
 // Helper to convert hex string to Uint8Array
@@ -60,8 +60,8 @@ export async function handleGetPublicApps(req: Request): Promise<Response> {
       );
     }
 
-    // Only return visible apps to regular users
-    const apps = getVisibleApps();
+    // Return apps visible to this user based on their group memberships
+    const apps = getVisibleAppsForNpub(npub);
     return Response.json({ success: true, apps });
   } catch (err) {
     console.error("Get apps error:", err);

@@ -180,32 +180,6 @@ export function renderAppsPage(): string {
       margin-bottom: 0.5rem;
     }
 
-    /* Join form */
-    .join-form {
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    .join-form input {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      font-size: 1rem;
-      font-family: var(--font-body);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .join-form input:focus {
-      border-color: var(--accent);
-    }
-
-    .join-form input::placeholder {
-      color: var(--muted);
-    }
 
     .btn {
       padding: 0.75rem 1.25rem;
@@ -622,563 +596,60 @@ export function renderAppsPage(): string {
       display: none;
     }
 
-    /* Edit App Modal */
-    .edit-app-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(61, 56, 51, 0.6);
+    .pin-display {
       display: flex;
-      align-items: center;
       justify-content: center;
-      z-index: 100;
-      backdrop-filter: blur(4px);
-    }
-
-    .edit-app-modal-overlay[hidden] {
-      display: none;
-    }
-
-    .edit-app-modal {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 2rem;
-      max-width: 480px;
-      width: 90%;
-      position: relative;
-      box-shadow: var(--shadow-warm);
-      border: 1px solid var(--border);
-    }
-
-    .edit-app-modal-close {
-      position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      background: transparent;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--muted);
-      padding: 0.25rem;
-      line-height: 1;
-    }
-
-    .edit-app-modal-close:hover {
-      color: var(--text);
-    }
-
-    .edit-app-modal h2 {
-      font-family: var(--font-serif);
-      font-size: 1.25rem;
-      font-weight: 400;
-      margin-bottom: 1rem;
-    }
-
-    .edit-app-form {
-      display: flex;
-      flex-direction: column;
       gap: 0.75rem;
+      margin-bottom: 1.25rem;
     }
 
-    .edit-app-form label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      font-size: 0.875rem;
-      color: var(--text);
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--border-soft);
+      border: 2px solid var(--border);
+      transition: background 150ms ease, border-color 150ms ease;
     }
 
-    .edit-app-form input {
-      padding: 0.6rem 0.75rem;
-      font-size: 0.875rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      font-family: var(--font-body);
-    }
-
-    .edit-app-form input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .edit-app-actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 0.5rem;
-    }
-
-    .edit-app-actions button {
-      flex: 1;
-      padding: 0.75rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.95rem;
-      font-family: var(--font-body);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .edit-app-actions button[type="button"] {
-      background: var(--surface-warm);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .edit-app-actions button[type="button"]:hover {
-      border-color: var(--accent);
-    }
-
-    .edit-app-actions button[type="submit"] {
+    .pin-dot.filled {
       background: var(--purple);
-      color: white;
-      border: none;
-    }
-
-    .edit-app-actions button[type="submit"]:hover {
-      background: var(--purple-light);
-    }
-
-    .edit-app-actions button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    /* Admin Panel */
-    .admin-panel {
-      margin-top: 1.5rem;
-      border-top: 2px solid var(--purple);
-    }
-
-    .admin-panel h2 {
-      color: var(--purple);
-    }
-
-    .admin-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .admin-header h2 {
-      margin-bottom: 0;
-    }
-
-    .invite-codes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .invite-code-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem;
-      background: var(--surface-warm);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--radius-sm);
-    }
-
-    .invite-code-item.inactive {
-      opacity: 0.6;
-    }
-
-    .invite-code-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .invite-code-text {
-      font-family: monospace;
-      font-weight: 500;
-      font-size: 0.95rem;
-    }
-
-    .invite-code-meta {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 0.25rem;
-    }
-
-    .invite-code-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .invite-code-actions button {
-      padding: 0.35rem 0.6rem;
-      font-size: 0.75rem;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      transition: all 0.2s;
-    }
-
-    .invite-code-actions button:hover {
       border-color: var(--purple);
-      color: var(--purple);
     }
 
-    .invite-code-actions button.delete:hover {
-      border-color: var(--error);
-      color: var(--error);
-    }
-
-    .add-code-form {
-      display: flex;
-      flex-direction: column;
+    .pin-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 0.75rem;
-      padding: 1rem;
-      background: var(--surface-warm);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--radius-sm);
+      max-width: 240px;
+      margin: 0 auto 1rem;
     }
 
-    .add-code-form input {
-      padding: 0.6rem 0.75rem;
-      font-size: 0.875rem;
+    .pin-keypad button {
+      width: 100%;
+      aspect-ratio: 1;
+      font-size: 1.5rem;
+      font-weight: 600;
+      border-radius: 50%;
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      font-family: var(--font-body);
-    }
-
-    .add-code-form input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .add-code-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .add-code-row input {
-      flex: 1;
-    }
-
-    .add-code-row input.small {
-      flex: 0 0 80px;
-    }
-
-    .btn-small {
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-    }
-
-    .copy-link-btn {
-      padding: 0.35rem 0.6rem;
-      font-size: 0.7rem;
-      background: var(--purple);
-      color: white;
-      border: none;
-      border-radius: var(--radius-sm);
+      background: var(--surface-warm);
+      color: var(--text);
       cursor: pointer;
+      transition: background 120ms ease, transform 100ms ease;
     }
 
-    .copy-link-btn:hover {
-      background: var(--purple-light);
+    .pin-keypad button:hover {
+      background: var(--border-soft);
     }
 
-    .admin-empty {
-      text-align: center;
-      padding: 1rem;
-      color: var(--muted);
+    .pin-keypad button:active {
+      transform: scale(0.95);
+      background: var(--border);
+    }
+
+    .pin-keypad .pin-key-action {
       font-size: 0.9rem;
-    }
-
-    /* App Management */
-    .apps-admin-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-
-    .app-admin-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem;
-      background: var(--surface-warm);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--radius-sm);
-    }
-
-    .app-admin-item.hidden-app {
-      opacity: 0.6;
-    }
-
-    .app-admin-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-sm);
-      background: var(--border-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .app-admin-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .app-admin-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .app-admin-name {
       font-weight: 500;
-      font-size: 0.95rem;
-    }
-
-    .app-admin-url {
-      font-size: 0.75rem;
-      color: var(--muted);
-      word-break: break-all;
-    }
-
-    .app-admin-desc {
-      font-size: 0.8rem;
-      color: var(--text-warm);
-      margin-top: 0.25rem;
-    }
-
-    .add-app-form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      padding: 1rem;
-      background: var(--surface-warm);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--radius-sm);
-    }
-
-    .add-app-form input {
-      padding: 0.6rem 0.75rem;
-      font-size: 0.875rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      font-family: var(--font-body);
-    }
-
-    .add-app-form input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .app-icon-section {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-    }
-
-    .app-icon-preview {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-sm);
-      background: var(--border-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .app-icon-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .app-icon-inputs {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .app-icon-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .app-icon-row input {
-      flex: 1;
-    }
-
-    .app-upload-btn {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.8rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .app-upload-btn:hover {
-      border-color: var(--purple);
-      color: var(--purple);
-    }
-
-    .section-divider {
-      margin: 1.5rem 0;
-      border: none;
-      border-top: 1px solid var(--border-soft);
-    }
-
-    /* Edit Invite Code Modal */
-    .edit-code-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(61, 56, 51, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      backdrop-filter: blur(4px);
-    }
-
-    .edit-code-modal-overlay[hidden] {
-      display: none;
-    }
-
-    .edit-code-modal {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 2rem;
-      max-width: 480px;
-      width: 90%;
-      position: relative;
-      box-shadow: var(--shadow-warm);
-      border: 1px solid var(--border);
-    }
-
-    .edit-code-modal-close {
-      position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      background: transparent;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--muted);
-      padding: 0.25rem;
-      line-height: 1;
-    }
-
-    .edit-code-modal-close:hover {
-      color: var(--text);
-    }
-
-    .edit-code-modal h2 {
-      font-family: var(--font-serif);
-      font-size: 1.25rem;
-      font-weight: 400;
-      margin-bottom: 1rem;
-    }
-
-    .edit-code-form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .edit-code-form label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      font-size: 0.875rem;
-      color: var(--text);
-    }
-
-    .edit-code-form input,
-    .edit-code-form textarea {
-      padding: 0.6rem 0.75rem;
-      font-size: 0.875rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      font-family: var(--font-body);
-    }
-
-    .edit-code-form input:focus,
-    .edit-code-form textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .edit-code-form textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
-
-    .edit-code-actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 0.5rem;
-    }
-
-    .edit-code-actions button {
-      flex: 1;
-      padding: 0.75rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.95rem;
-      font-family: var(--font-body);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .edit-code-actions button[type="button"] {
-      background: var(--surface-warm);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .edit-code-actions button[type="button"]:hover {
-      border-color: var(--accent);
-    }
-
-    .edit-code-actions button[type="submit"] {
-      background: var(--purple);
-      color: white;
-      border: none;
-    }
-
-    .edit-code-actions button[type="submit"]:hover {
-      background: var(--purple-light);
-    }
-
-    .edit-code-actions button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .add-code-form textarea {
-      padding: 0.6rem 0.75rem;
-      font-size: 0.875rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      font-family: var(--font-body);
-      resize: vertical;
-      min-height: 80px;
-    }
-
-    .add-code-form textarea:focus {
-      outline: none;
-      border-color: var(--accent);
     }
 
     /* Welcome Message Component */
@@ -1332,6 +803,122 @@ export function renderAppsPage(): string {
       border-color: var(--purple);
       color: var(--purple);
     }
+
+    /* Invite Codes Component */
+    .invite-codes-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .invite-codes-card[hidden] {
+      display: none;
+    }
+
+    .invite-codes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      background: var(--surface-warm);
+      border-bottom: 1px solid var(--border-soft);
+      transition: background 0.2s;
+    }
+
+    .invite-codes-header:hover {
+      background: var(--border-soft);
+    }
+
+    .invite-codes-header h2 {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 400;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .invite-codes-header .chevron {
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+
+    .invite-codes-card.collapsed .invite-codes-header .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .invite-codes-card.collapsed .invite-codes-content {
+      display: none;
+    }
+
+    .invite-codes-content {
+      padding: 1.5rem;
+    }
+
+    .invite-codes-intro {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .invite-codes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .invite-code-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1rem;
+      background: var(--surface-warm);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md);
+    }
+
+    .invite-code-app {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .invite-code-value {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .invite-code-value code {
+      font-family: monospace;
+      font-size: 0.9rem;
+      background: var(--bg);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .invite-code-copy {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-family: var(--font-body);
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .invite-code-copy:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
   </style>
 </head>
 <body>
@@ -1346,6 +933,7 @@ export function renderAppsPage(): string {
           <div class="user-npub" id="user-npub">...</div>
           <button type="button" id="view-profile-btn">View Profile</button>
           <button type="button" id="copy-npub">Copy ID</button>
+          <button type="button" id="admin-link-btn" hidden>Admin</button>
           <button type="button" id="logout-btn">Log out</button>
         </div>
       </div>
@@ -1365,101 +953,28 @@ export function renderAppsPage(): string {
       </div>
     </div>
 
+    <!-- Invite Codes Component -->
+    <div class="invite-codes-card" id="invite-codes-card" hidden>
+      <div class="invite-codes-header" id="invite-codes-header">
+        <h2>Your Invite Codes</h2>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="invite-codes-content">
+        <p class="invite-codes-intro">The following invite codes have been assigned to you for use in other apps:</p>
+        <div class="invite-codes-list" id="invite-codes-list"></div>
+      </div>
+    </div>
+
     <div class="card">
       <h2>Your Apps</h2>
       <div class="apps-list" id="apps-list">
         <div class="apps-empty">
-          <p>No apps yet.</p>
-          <p>Join an app with an invite code below.</p>
+          <p>No apps available yet.</p>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <h2>Join an App</h2>
-      <form class="join-form" id="join-form">
-        <input type="text" name="code" placeholder="Enter invite code" autocomplete="off">
-        <button class="btn btn-primary" type="submit">Join</button>
-      </form>
-    </div>
 
-    <!-- Admin Panel (only visible to admin) -->
-    <div class="card admin-panel" id="admin-panel" hidden>
-      <div class="admin-header">
-        <h2>Manage Apps</h2>
-      </div>
-      <div class="apps-admin-list" id="apps-admin-list">
-        <div class="admin-empty">Loading...</div>
-      </div>
-      <form class="add-app-form" id="add-app-form">
-        <input type="text" name="name" placeholder="App name" required>
-        <input type="text" name="description" placeholder="Short description">
-        <input type="url" name="url" placeholder="https://app.example.com" required>
-        <input type="text" name="teleportPubkey" placeholder="Teleport pubkey (npub or hex) - optional">
-        <div class="app-icon-section">
-          <div class="app-icon-preview" id="app-icon-preview">
-            <span>📱</span>
-          </div>
-          <div class="app-icon-inputs">
-            <div class="app-icon-row">
-              <input type="url" name="iconUrl" id="app-icon-url" placeholder="Icon URL">
-              <button type="button" class="app-upload-btn" id="app-upload-btn">Upload</button>
-              <input type="file" id="app-icon-file" accept="image/*" hidden>
-            </div>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-small">Add App</button>
-      </form>
-
-      <hr class="section-divider">
-
-      <div class="admin-header">
-        <h2>Invite Codes</h2>
-      </div>
-      <div class="invite-codes-list" id="invite-codes-list">
-        <div class="admin-empty">Loading...</div>
-      </div>
-      <form class="add-code-form" id="add-code-form">
-        <div class="add-code-row">
-          <input type="text" name="code" placeholder="New invite code" required>
-          <input type="number" name="maxUses" class="small" placeholder="Max" min="1">
-        </div>
-        <input type="text" name="description" placeholder="Description (optional)">
-        <textarea name="welcomeMessage" placeholder="Welcome message (markdown, optional)"></textarea>
-        <button type="submit" class="btn btn-primary btn-small">Add Code</button>
-      </form>
-    </div>
-
-  <!-- Edit Invite Code Modal -->
-  <div class="edit-code-modal-overlay" id="edit-code-modal" hidden>
-    <div class="edit-code-modal">
-      <button class="edit-code-modal-close" type="button" id="edit-code-close" aria-label="Close">&times;</button>
-      <h2>Edit Invite Code</h2>
-      <form class="edit-code-form" id="edit-code-form">
-        <input type="hidden" name="code" id="edit-code-code">
-        <label>
-          Code
-          <input type="text" id="edit-code-display" disabled>
-        </label>
-        <label>
-          Description
-          <input type="text" name="description" id="edit-code-description">
-        </label>
-        <label>
-          Max Uses
-          <input type="number" name="maxUses" id="edit-code-max-uses" min="1">
-        </label>
-        <label>
-          Welcome Message (Markdown)
-          <textarea name="welcomeMessage" id="edit-code-welcome-message" placeholder="# Welcome!&#10;&#10;Your custom welcome message..."></textarea>
-        </label>
-        <div class="edit-code-actions">
-          <button type="button" id="edit-code-cancel">Cancel</button>
-          <button type="submit" id="edit-code-save">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
   </div>
 
   <!-- Profile Modal -->
@@ -1512,47 +1027,30 @@ export function renderAppsPage(): string {
     <div class="pin-modal">
       <button class="pin-modal-close" type="button" id="pin-close" aria-label="Close">&times;</button>
       <h2>Transfer Identity</h2>
-      <p id="pin-modal-desc">Enter a PIN to securely transfer your identity to <span id="pin-app-name"></span></p>
-      <form id="pin-form">
-        <input type="password" class="pin-input" id="pin-input" placeholder="Enter PIN" minlength="4" maxlength="21" required autocomplete="off">
-        <button type="submit" class="pin-submit" id="pin-submit">Transfer</button>
-        <p class="pin-error" id="pin-error" hidden></p>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit App Modal -->
-  <div class="edit-app-modal-overlay" id="edit-app-modal" hidden>
-    <div class="edit-app-modal">
-      <button class="edit-app-modal-close" type="button" id="edit-app-close" aria-label="Close">&times;</button>
-      <h2>Edit App</h2>
-      <form class="edit-app-form" id="edit-app-form">
-        <input type="hidden" name="id" id="edit-app-id">
-        <label>
-          Name
-          <input type="text" name="name" id="edit-app-name" required>
-        </label>
-        <label>
-          Description
-          <input type="text" name="description" id="edit-app-description">
-        </label>
-        <label>
-          URL
-          <input type="url" name="url" id="edit-app-url" required>
-        </label>
-        <label>
-          Icon URL
-          <input type="url" name="iconUrl" id="edit-app-icon-url">
-        </label>
-        <label>
-          Teleport Pubkey (npub or hex)
-          <input type="text" name="teleportPubkey" id="edit-app-teleport-pubkey" placeholder="npub1... or hex">
-        </label>
-        <div class="edit-app-actions">
-          <button type="button" id="edit-app-cancel">Cancel</button>
-          <button type="submit" id="edit-app-save">Save Changes</button>
-        </div>
-      </form>
+      <p id="pin-modal-desc">Enter a 6-digit numerical PIN to securely log in to <span id="pin-app-name"></span>. You will be prompted for this PIN again in <span id="pin-app-name-repeat"></span> to complete the process.</p>
+      <div class="pin-display" id="pin-display">
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+      </div>
+      <p class="pin-error" id="pin-error" hidden></p>
+      <div class="pin-keypad" id="pin-keypad">
+        <button type="button" data-pin-key="1">1</button>
+        <button type="button" data-pin-key="2">2</button>
+        <button type="button" data-pin-key="3">3</button>
+        <button type="button" data-pin-key="4">4</button>
+        <button type="button" data-pin-key="5">5</button>
+        <button type="button" data-pin-key="6">6</button>
+        <button type="button" data-pin-key="7">7</button>
+        <button type="button" data-pin-key="8">8</button>
+        <button type="button" data-pin-key="9">9</button>
+        <button type="button" data-pin-key="clear" class="pin-key-action">Clear</button>
+        <button type="button" data-pin-key="0">0</button>
+        <button type="button" data-pin-key="back" class="pin-key-action">&larr;</button>
+      </div>
     </div>
   </div>
 
@@ -1571,42 +1069,24 @@ export function renderAppsPage(): string {
     const copyNpubBtn = document.getElementById('copy-npub');
     const logoutBtn = document.getElementById('logout-btn');
     const viewProfileBtn = document.getElementById('view-profile-btn');
-    const joinForm = document.getElementById('join-form');
 
-    // Admin elements
-    const adminPanel = document.getElementById('admin-panel');
+    // Invite codes elements
+    const inviteCodesCard = document.getElementById('invite-codes-card');
+    const inviteCodesHeader = document.getElementById('invite-codes-header');
     const inviteCodesList = document.getElementById('invite-codes-list');
-    const addCodeForm = document.getElementById('add-code-form');
-
-    // App admin elements
-    const appsAdminList = document.getElementById('apps-admin-list');
-    const addAppForm = document.getElementById('add-app-form');
-    const appIconUrl = document.getElementById('app-icon-url');
-    const appIconPreview = document.getElementById('app-icon-preview');
-    const appUploadBtn = document.getElementById('app-upload-btn');
-    const appIconFile = document.getElementById('app-icon-file');
-
-    // Edit app modal elements
-    const editAppModal = document.getElementById('edit-app-modal');
-    const editAppCloseBtn = document.getElementById('edit-app-close');
-    const editAppForm = document.getElementById('edit-app-form');
-    const editAppId = document.getElementById('edit-app-id');
-    const editAppName = document.getElementById('edit-app-name');
-    const editAppDescription = document.getElementById('edit-app-description');
-    const editAppUrl = document.getElementById('edit-app-url');
-    const editAppIconUrl = document.getElementById('edit-app-icon-url');
-    const editAppTeleportPubkey = document.getElementById('edit-app-teleport-pubkey');
-    const editAppCancel = document.getElementById('edit-app-cancel');
-    const editAppSave = document.getElementById('edit-app-save');
 
     // PIN modal elements
     const pinModal = document.getElementById('pin-modal');
     const pinCloseBtn = document.getElementById('pin-close');
-    const pinForm = document.getElementById('pin-form');
-    const pinInput = document.getElementById('pin-input');
-    const pinSubmit = document.getElementById('pin-submit');
+    const pinKeypad = document.getElementById('pin-keypad');
+    const pinDots = document.querySelectorAll('[data-pin-dot]');
     const pinError = document.getElementById('pin-error');
     const pinAppName = document.getElementById('pin-app-name');
+    const pinAppNameRepeat = document.getElementById('pin-app-name-repeat');
+
+    // PIN state
+    const PIN_LENGTH = 6;
+    let currentPin = '';
 
     // Current teleport target
     let teleportTarget = null;
@@ -1709,17 +1189,11 @@ export function renderAppsPage(): string {
       window.location.href = '/';
     });
 
-    // Join form (placeholder)
-    joinForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const code = joinForm.elements.code.value.trim();
-      if (!code) return;
-      alert('App joining coming soon!');
-    });
 
     // === App Display and Teleport Functions ===
 
     let userApps = [];
+    let userInviteCodes = {}; // Map of appId -> invite code
 
     async function loadUserApps() {
       try {
@@ -1785,20 +1259,75 @@ export function renderAppsPage(): string {
       return div.innerHTML;
     }
 
+    function updatePinDisplay() {
+      pinDots.forEach((dot, index) => {
+        if (index < currentPin.length) {
+          dot.classList.add('filled');
+        } else {
+          dot.classList.remove('filled');
+        }
+      });
+    }
+
+    function resetPinEntry() {
+      currentPin = '';
+      updatePinDisplay();
+    }
+
+    function showPinError(message) {
+      pinError.textContent = message;
+      pinError.hidden = false;
+    }
+
+    function hidePinError() {
+      pinError.hidden = true;
+    }
+
     function showPinModal(app) {
       teleportTarget = app;
       pinAppName.textContent = app.name;
-      pinInput.value = '';
-      pinError.hidden = true;
-      pinSubmit.disabled = false;
-      pinSubmit.textContent = 'Transfer';
+      pinAppNameRepeat.textContent = app.name;
+      resetPinEntry();
+      hidePinError();
       pinModal.hidden = false;
-      pinInput.focus();
     }
 
     function hidePinModal() {
       pinModal.hidden = true;
       teleportTarget = null;
+      resetPinEntry();
+      hidePinError();
+    }
+
+    async function handlePinComplete() {
+      if (currentPin.length !== PIN_LENGTH) return;
+
+      hidePinError();
+      await performTeleport(currentPin);
+    }
+
+    function handlePinKeyPress(key) {
+      hidePinError();
+
+      if (key === 'clear') {
+        resetPinEntry();
+        return;
+      }
+
+      if (key === 'back') {
+        currentPin = currentPin.slice(0, -1);
+        updatePinDisplay();
+        return;
+      }
+
+      if (currentPin.length >= PIN_LENGTH) return;
+
+      currentPin += key;
+      updatePinDisplay();
+
+      if (currentPin.length === PIN_LENGTH) {
+        handlePinComplete();
+      }
     }
 
     function generateHashId() {
@@ -1841,15 +1370,22 @@ export function renderAppsPage(): string {
           throw new Error(data.error || 'Failed to store teleport key');
         }
 
-        // Build teleport URL with NIP-44 encrypted blob and open in new tab
-        const teleportUrl = teleportTarget.url + (teleportTarget.url.includes('?') ? '&' : '?') + 'keyteleport=' + encodeURIComponent(data.blob);
+        // Build teleport URL with NIP-44 encrypted blob and invite code if available
+        let teleportUrl = teleportTarget.url + (teleportTarget.url.includes('?') ? '&' : '?') + 'keyteleport=' + encodeURIComponent(data.blob);
+
+        // Add invite code if one exists for this app
+        const inviteCode = userInviteCodes[teleportTarget.id];
+        if (inviteCode) {
+          teleportUrl += '&ic=' + encodeURIComponent(inviteCode);
+        }
+
         window.open(teleportUrl, '_blank');
 
         hidePinModal();
       } catch (err) {
         console.error('Teleport error:', err);
-        pinError.textContent = err.message || 'Failed to transfer identity';
-        pinError.hidden = false;
+        showPinError(err.message || 'Failed to transfer identity');
+        resetPinEntry();
       }
     }
 
@@ -1862,23 +1398,45 @@ export function renderAppsPage(): string {
       }
     });
 
-    pinForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const pin = pinInput.value;
-      if (!pin || pin.length < 4) {
-        pinError.textContent = 'PIN must be at least 4 characters';
-        pinError.hidden = false;
+    // Keypad button clicks
+    pinKeypad.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!target.hasAttribute('data-pin-key')) return;
+      const key = target.getAttribute('data-pin-key');
+      handlePinKeyPress(key);
+    });
+
+    // Keyboard input for PIN (when modal is visible)
+    document.addEventListener('keydown', (e) => {
+      // Only handle when PIN modal is visible
+      if (pinModal.hidden) return;
+
+      // Handle escape to close
+      if (e.key === 'Escape') {
+        hidePinModal();
         return;
       }
 
-      pinSubmit.disabled = true;
-      pinSubmit.textContent = 'Transferring...';
-      pinError.hidden = true;
+      // Handle number keys (0-9)
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        handlePinKeyPress(e.key);
+        return;
+      }
 
-      await performTeleport(pin);
+      // Handle backspace
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        handlePinKeyPress('back');
+        return;
+      }
 
-      pinSubmit.disabled = false;
-      pinSubmit.textContent = 'Transfer';
+      // Handle delete/clear
+      if (e.key === 'Delete') {
+        e.preventDefault();
+        handlePinKeyPress('clear');
+        return;
+      }
     });
 
     // === Welcome Message Functions ===
@@ -2019,6 +1577,62 @@ export function renderAppsPage(): string {
 
     // Load welcome message on page load
     loadWelcomeMessage();
+
+    // === Invite Codes Functions ===
+
+    async function loadInviteCodes() {
+      try {
+        const res = await fetch('/api/user/invite-codes', {
+          headers: { 'X-Npub': npub }
+        });
+        const data = await res.json();
+
+        if (!data.success || !data.inviteCodes || data.inviteCodes.length === 0) {
+          // No invite codes, hide the card
+          inviteCodesCard.hidden = true;
+          return;
+        }
+
+        // Store invite codes for teleport use
+        data.inviteCodes.forEach(ic => {
+          userInviteCodes[ic.appId] = ic.code;
+        });
+
+        // Render invite codes
+        inviteCodesList.innerHTML = data.inviteCodes.map(ic =>
+          '<div class="invite-code-item">' +
+            '<span class="invite-code-app">' + escapeHtml(ic.appName) + '</span>' +
+            '<div class="invite-code-value">' +
+              '<code>' + escapeHtml(ic.code) + '</code>' +
+              '<button class="invite-code-copy" data-code="' + escapeHtml(ic.code) + '">Copy</button>' +
+            '</div>' +
+          '</div>'
+        ).join('');
+
+        inviteCodesCard.hidden = false;
+
+        // Add copy handlers
+        inviteCodesList.querySelectorAll('.invite-code-copy').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const code = e.target.dataset.code;
+            await navigator.clipboard.writeText(code);
+            e.target.textContent = 'Copied!';
+            setTimeout(() => e.target.textContent = 'Copy', 2000);
+          });
+        });
+      } catch (err) {
+        console.error('Failed to load invite codes:', err);
+        inviteCodesCard.hidden = true;
+      }
+    }
+
+    // Invite codes event listeners
+    inviteCodesHeader.addEventListener('click', () => {
+      inviteCodesCard.classList.toggle('collapsed');
+    });
+
+    // Load invite codes on page load
+    loadInviteCodes();
 
     // Load user apps on page load
     loadUserApps();
@@ -2240,565 +1854,12 @@ export function renderAppsPage(): string {
 
     const isAdmin = npub && ADMIN_NPUB && npub === ADMIN_NPUB;
 
-    async function loadInviteCodes() {
-      try {
-        const res = await fetch('/admin/codes', {
-          headers: { 'X-Npub': npub }
-        });
-        const data = await res.json();
-
-        if (!data.success) {
-          inviteCodesList.innerHTML = '<div class="admin-empty">Failed to load codes</div>';
-          return;
-        }
-
-        if (data.codes.length === 0) {
-          inviteCodesList.innerHTML = '<div class="admin-empty">No invite codes yet</div>';
-          return;
-        }
-
-        // Store codes data for edit modal
-        window.adminCodesData = {};
-
-        inviteCodesList.innerHTML = data.codes.map(code => {
-          // Store code data in JS object
-          window.adminCodesData[code.code] = code;
-
-          const usageText = code.max_uses
-            ? code.uses + '/' + code.max_uses + ' uses'
-            : code.uses + ' uses';
-          const statusText = code.active ? '' : ' (disabled)';
-          const inactiveClass = code.active ? '' : ' inactive';
-          const welcomeBadge = code.welcome_message
-            ? '<span style="font-size:0.7rem;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;margin-left:6px">Welcome</span>'
-            : '';
-
-          return '<div class="invite-code-item' + inactiveClass + '" data-code="' + code.code + '">' +
-            '<div class="invite-code-info">' +
-              '<div class="invite-code-text">' + code.code + statusText + welcomeBadge + '</div>' +
-              '<div class="invite-code-meta">' + usageText + (code.description ? ' - ' + code.description : '') + '</div>' +
-            '</div>' +
-            '<div class="invite-code-actions">' +
-              '<button type="button" class="copy-link-btn" data-copy-link="' + code.code + '">Copy Link</button>' +
-              '<button type="button" data-edit-code="' + code.code + '">Edit</button>' +
-              '<button type="button" data-toggle="' + code.code + '" data-active="' + code.active + '">' + (code.active ? 'Disable' : 'Enable') + '</button>' +
-              '<button type="button" class="delete" data-delete="' + code.code + '">Delete</button>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-
-        // Add event listeners
-        inviteCodesList.querySelectorAll('[data-copy-link]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const code = btn.dataset.copyLink;
-            const link = window.location.origin + '/?ic=' + encodeURIComponent(code);
-            navigator.clipboard.writeText(link);
-            btn.textContent = 'Copied!';
-            setTimeout(() => btn.textContent = 'Copy Link', 2000);
-          });
-        });
-
-        inviteCodesList.querySelectorAll('[data-edit-code]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const code = btn.dataset.editCode;
-            const codeData = window.adminCodesData[code];
-            if (codeData) {
-              showEditCodeModal(codeData);
-            }
-          });
-        });
-
-        inviteCodesList.querySelectorAll('[data-toggle]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const code = btn.dataset.toggle;
-            const currentActive = btn.dataset.active === '1';
-            await toggleCode(code, !currentActive);
-          });
-        });
-
-        inviteCodesList.querySelectorAll('[data-delete]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const code = btn.dataset.delete;
-            if (confirm('Delete invite code "' + code + '"?')) {
-              await deleteCode(code);
-            }
-          });
-        });
-
-      } catch (err) {
-        console.error('Failed to load invite codes:', err);
-        inviteCodesList.innerHTML = '<div class="admin-empty">Failed to load codes</div>';
-      }
-    }
-
-    async function createCode(code, description, maxUses, welcomeMessage) {
-      try {
-        const res = await fetch('/admin/codes', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Npub': npub
-          },
-          body: JSON.stringify({ code, description, maxUses, welcomeMessage })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadInviteCodes();
-          return true;
-        } else {
-          alert(data.error || 'Failed to create code');
-          return false;
-        }
-      } catch (err) {
-        console.error('Failed to create code:', err);
-        alert('Failed to create code');
-        return false;
-      }
-    }
-
-    async function updateCode(code, description, maxUses, welcomeMessage) {
-      try {
-        const res = await fetch('/admin/codes/' + encodeURIComponent(code), {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Npub': npub
-          },
-          body: JSON.stringify({ description, maxUses, welcomeMessage })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadInviteCodes();
-          return true;
-        } else {
-          alert(data.error || 'Failed to update code');
-          return false;
-        }
-      } catch (err) {
-        console.error('Failed to update code:', err);
-        alert('Failed to update code');
-        return false;
-      }
-    }
-
-    async function toggleCode(code, active) {
-      try {
-        const res = await fetch('/admin/codes/' + encodeURIComponent(code) + '/toggle', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Npub': npub
-          },
-          body: JSON.stringify({ active })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadInviteCodes();
-        } else {
-          alert(data.error || 'Failed to toggle code');
-        }
-      } catch (err) {
-        console.error('Failed to toggle code:', err);
-        alert('Failed to toggle code');
-      }
-    }
-
-    async function deleteCode(code) {
-      try {
-        const res = await fetch('/admin/codes/' + encodeURIComponent(code), {
-          method: 'DELETE',
-          headers: { 'X-Npub': npub }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadInviteCodes();
-        } else {
-          alert(data.error || 'Failed to delete code');
-        }
-      } catch (err) {
-        console.error('Failed to delete code:', err);
-        alert('Failed to delete code');
-      }
-    }
-
-    // === App Management Functions ===
-
-    async function loadApps() {
-      try {
-        const res = await fetch('/admin/apps', {
-          headers: { 'X-Npub': npub }
-        });
-        const data = await res.json();
-
-        if (!data.success) {
-          appsAdminList.innerHTML = '<div class="admin-empty">Failed to load apps</div>';
-          return;
-        }
-
-        if (data.apps.length === 0) {
-          appsAdminList.innerHTML = '<div class="admin-empty">No apps configured yet</div>';
-          return;
-        }
-
-        // Store apps data for edit modal
-        window.adminAppsData = {};
-
-        appsAdminList.innerHTML = data.apps.map(app => {
-          // Store app data in JS object instead of data attribute
-          window.adminAppsData[app.id] = app;
-
-          const iconHtml = app.icon_url
-            ? '<img src="' + app.icon_url + '" alt="" onerror="this.parentElement.innerHTML=String.fromCharCode(128241)">'
-            : '<span>📱</span>';
-          const teleportBadge = app.teleport_pubkey
-            ? '<span style="font-size:0.7rem;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px;margin-left:6px">Teleport</span>'
-            : '';
-          const isVisible = app.visible === 1;
-          const hiddenClass = isVisible ? '' : ' hidden-app';
-          const visibilityBadge = isVisible
-            ? ''
-            : '<span style="font-size:0.7rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;margin-left:6px">Hidden</span>';
-
-          return '<div class="app-admin-item' + hiddenClass + '" data-app-id="' + app.id + '">' +
-            '<div class="app-admin-icon">' + iconHtml + '</div>' +
-            '<div class="app-admin-info">' +
-              '<div class="app-admin-name">' + escapeHtml(app.name) + teleportBadge + visibilityBadge + '</div>' +
-              '<div class="app-admin-url">' + escapeHtml(app.url) + '</div>' +
-              (app.description ? '<div class="app-admin-desc">' + escapeHtml(app.description) + '</div>' : '') +
-            '</div>' +
-            '<div class="invite-code-actions">' +
-              '<button type="button" data-toggle-app="' + app.id + '" data-visible="' + (isVisible ? '1' : '0') + '">' + (isVisible ? 'Hide' : 'Show') + '</button>' +
-              '<button type="button" data-edit-app="' + app.id + '">Edit</button>' +
-              '<button type="button" class="delete" data-delete-app="' + app.id + '">Delete</button>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-
-        // Add event listeners
-        appsAdminList.querySelectorAll('[data-toggle-app]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const id = parseInt(btn.dataset.toggleApp, 10);
-            const currentVisible = btn.dataset.visible === '1';
-            await toggleApp(id, !currentVisible);
-          });
-        });
-
-        appsAdminList.querySelectorAll('[data-edit-app]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const appId = parseInt(btn.dataset.editApp, 10);
-            const appData = window.adminAppsData[appId];
-            if (appData) {
-              showEditAppModal(appData);
-            }
-          });
-        });
-
-        appsAdminList.querySelectorAll('[data-delete-app]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const id = parseInt(btn.dataset.deleteApp, 10);
-            const appItem = btn.closest('.app-admin-item');
-            const appName = appItem.querySelector('.app-admin-name').textContent;
-            if (confirm('Delete app "' + appName + '"?')) {
-              await deleteAppById(id);
-            }
-          });
-        });
-
-      } catch (err) {
-        console.error('Failed to load apps:', err);
-        appsAdminList.innerHTML = '<div class="admin-empty">Failed to load apps</div>';
-      }
-    }
-
-    async function createAppEntry(name, description, iconUrl, url, teleportPubkey) {
-      try {
-        const res = await fetch('/admin/apps', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Npub': npub
-          },
-          body: JSON.stringify({ name, description, iconUrl, url, teleportPubkey })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadApps();
-          return true;
-        } else {
-          alert(data.error || 'Failed to create app');
-          return false;
-        }
-      } catch (err) {
-        console.error('Failed to create app:', err);
-        alert('Failed to create app');
-        return false;
-      }
-    }
-
-    async function deleteAppById(id) {
-      try {
-        const res = await fetch('/admin/apps/' + id, {
-          method: 'DELETE',
-          headers: { 'X-Npub': npub }
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadApps();
-        } else {
-          alert(data.error || 'Failed to delete app');
-        }
-      } catch (err) {
-        console.error('Failed to delete app:', err);
-        alert('Failed to delete app');
-      }
-    }
-
-    async function toggleApp(id, visible) {
-      try {
-        const res = await fetch('/admin/apps/' + id + '/toggle', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Npub': npub
-          },
-          body: JSON.stringify({ visible })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadApps();
-          loadUserApps(); // Refresh user apps list too
-        } else {
-          alert(data.error || 'Failed to toggle app visibility');
-        }
-      } catch (err) {
-        console.error('Failed to toggle app:', err);
-        alert('Failed to toggle app visibility');
-      }
-    }
-
-    // Edit invite code modal elements
-    const editCodeModal = document.getElementById('edit-code-modal');
-    const editCodeCloseBtn = document.getElementById('edit-code-close');
-    const editCodeForm = document.getElementById('edit-code-form');
-    const editCodeCode = document.getElementById('edit-code-code');
-    const editCodeDisplay = document.getElementById('edit-code-display');
-    const editCodeDescription = document.getElementById('edit-code-description');
-    const editCodeMaxUses = document.getElementById('edit-code-max-uses');
-    const editCodeWelcomeMessage = document.getElementById('edit-code-welcome-message');
-    const editCodeCancel = document.getElementById('edit-code-cancel');
-    const editCodeSave = document.getElementById('edit-code-save');
-
-    // Edit invite code modal functions
-    function showEditCodeModal(codeData) {
-      editCodeCode.value = codeData.code;
-      editCodeDisplay.value = codeData.code;
-      editCodeDescription.value = codeData.description || '';
-      editCodeMaxUses.value = codeData.max_uses || '';
-      editCodeWelcomeMessage.value = codeData.welcome_message || '';
-      editCodeSave.disabled = false;
-      editCodeSave.textContent = 'Save Changes';
-      editCodeModal.hidden = false;
-    }
-
-    function hideEditCodeModal() {
-      editCodeModal.hidden = true;
-    }
-
-    // Edit code modal event listeners
-    editCodeCloseBtn.addEventListener('click', hideEditCodeModal);
-    editCodeCancel.addEventListener('click', hideEditCodeModal);
-
-    editCodeModal.addEventListener('click', (e) => {
-      if (e.target === editCodeModal) {
-        hideEditCodeModal();
-      }
-    });
-
-    editCodeForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const code = editCodeCode.value;
-      const description = editCodeDescription.value.trim();
-      const maxUses = editCodeMaxUses.value;
-      const welcomeMessage = editCodeWelcomeMessage.value.trim();
-
-      editCodeSave.disabled = true;
-      editCodeSave.textContent = 'Saving...';
-
-      if (await updateCode(code, description || null, maxUses || null, welcomeMessage || null)) {
-        hideEditCodeModal();
-      }
-
-      editCodeSave.disabled = false;
-      editCodeSave.textContent = 'Save Changes';
-    });
-
-    // Edit app modal functions
-    function showEditAppModal(app) {
-      editAppId.value = app.id;
-      editAppName.value = app.name || '';
-      editAppDescription.value = app.description || '';
-      editAppUrl.value = app.url || '';
-      editAppIconUrl.value = app.icon_url || '';
-      editAppTeleportPubkey.value = app.teleport_pubkey || '';
-      editAppSave.disabled = false;
-      editAppSave.textContent = 'Save Changes';
-      editAppModal.hidden = false;
-    }
-
-    function hideEditAppModal() {
-      editAppModal.hidden = true;
-    }
-
-    async function updateAppById(id, name, description, iconUrl, url, teleportPubkey) {
-      try {
-        const res = await fetch('/admin/apps/' + id, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Npub': npub
-          },
-          body: JSON.stringify({ name, description, iconUrl, url, teleportPubkey })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          loadApps();
-          loadUserApps(); // Refresh user apps list too
-          return true;
-        } else {
-          alert(data.error || 'Failed to update app');
-          return false;
-        }
-      } catch (err) {
-        console.error('Failed to update app:', err);
-        alert('Failed to update app');
-        return false;
-      }
-    }
-
-    // Edit app modal event listeners
-    editAppCloseBtn.addEventListener('click', hideEditAppModal);
-    editAppCancel.addEventListener('click', hideEditAppModal);
-
-    editAppModal.addEventListener('click', (e) => {
-      if (e.target === editAppModal) {
-        hideEditAppModal();
-      }
-    });
-
-    editAppForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = parseInt(editAppId.value, 10);
-      const name = editAppName.value.trim();
-      const description = editAppDescription.value.trim();
-      const url = editAppUrl.value.trim();
-      const iconUrl = editAppIconUrl.value.trim();
-      const teleportPubkey = editAppTeleportPubkey.value.trim();
-
-      editAppSave.disabled = true;
-      editAppSave.textContent = 'Saving...';
-
-      if (await updateAppById(id, name, description || null, iconUrl || null, url, teleportPubkey || null)) {
-        hideEditAppModal();
-      }
-
-      editAppSave.disabled = false;
-      editAppSave.textContent = 'Save Changes';
-    });
-
-    // Initialize admin panel if admin
-    if (isAdmin) {
-      adminPanel.hidden = false;
-      loadInviteCodes();
-      loadApps();
-
-      // Invite code form
-      addCodeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const code = addCodeForm.elements.code.value.trim();
-        const description = addCodeForm.elements.description.value.trim();
-        const maxUses = addCodeForm.elements.maxUses.value;
-        const welcomeMessage = addCodeForm.elements.welcomeMessage.value.trim();
-
-        if (await createCode(code, description || null, maxUses || null, welcomeMessage || null)) {
-          addCodeForm.reset();
-        }
-      });
-
-      // App form
-      addAppForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = addAppForm.elements.name.value.trim();
-        const description = addAppForm.elements.description.value.trim();
-        const url = addAppForm.elements.url.value.trim();
-        const iconUrl = addAppForm.elements.iconUrl.value.trim();
-        const teleportPubkey = addAppForm.elements.teleportPubkey.value.trim();
-
-        if (await createAppEntry(name, description || null, iconUrl || null, url, teleportPubkey || null)) {
-          addAppForm.reset();
-          appIconPreview.innerHTML = '<span>📱</span>';
-        }
-      });
-
-      // App icon preview
-      appIconUrl.addEventListener('input', () => {
-        const url = appIconUrl.value.trim();
-        if (url) {
-          appIconPreview.innerHTML = '<img src="' + url + '" alt="" onerror="this.parentElement.innerHTML=\\'<span>📱</span>\\'">';
-        } else {
-          appIconPreview.innerHTML = '<span>📱</span>';
-        }
-      });
-
-      // App icon upload
-      appUploadBtn.addEventListener('click', () => {
-        appIconFile.click();
-      });
-
-      appIconFile.addEventListener('change', async () => {
-        const file = appIconFile.files[0];
-        if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-          alert('Image too large (max 2MB)');
-          return;
-        }
-
-        appUploadBtn.disabled = true;
-        appUploadBtn.textContent = 'Uploading...';
-
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-
-          const res = await fetch('/upload', {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
-
-          if (data.success) {
-            const fullUrl = window.location.origin + data.url;
-            appIconUrl.value = fullUrl;
-            appIconPreview.innerHTML = '<img src="' + fullUrl + '" alt="">';
-          } else {
-            alert(data.error || 'Upload failed');
-          }
-        } catch (err) {
-          console.error('Upload error:', err);
-          alert('Upload failed');
-        } finally {
-          appUploadBtn.disabled = false;
-          appUploadBtn.textContent = 'Upload';
-          appIconFile.value = '';
-        }
+    // Show admin link in dropdown if admin
+    const adminLinkBtn = document.getElementById('admin-link-btn');
+    if (isAdmin && adminLinkBtn) {
+      adminLinkBtn.hidden = false;
+      adminLinkBtn.addEventListener('click', () => {
+        window.location.href = '/admin';
       });
     }
   </script>

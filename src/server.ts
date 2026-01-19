@@ -3,6 +3,7 @@ import { PORT, IS_DEV, APP_NAME, PUBLIC_DIR } from "./config.ts";
 import { renderWelcomePage } from "./render/welcome.ts";
 import { renderAppsPage } from "./render/apps.ts";
 import { renderOnboardingPage } from "./render/onboarding.ts";
+import { renderAdminPage } from "./render/admin.ts";
 import { handleSignup, handleRecover } from "./routes/auth.ts";
 import {
   handleGetInviteCodes,
@@ -15,6 +16,25 @@ import {
   handleUpdateApp,
   handleDeleteApp,
   handleToggleApp,
+  // Group routes
+  handleGetGroups,
+  handleCreateGroup,
+  handleUpdateGroup,
+  handleDeleteGroup,
+  handleToggleGroup,
+  handleGetGroupUsers,
+  handleAddUserToGroup,
+  handleRemoveUserFromGroup,
+  // Invite code groups
+  handleGetInviteCodeGroups,
+  handleSetInviteCodeGroups,
+  // App groups
+  handleGetAppGroups,
+  handleSetAppGroups,
+  // Invite code app codes
+  handleGetInviteCodeAppCodes,
+  handleSetInviteCodeAppCode,
+  handleDeleteInviteCodeAppCode,
 } from "./routes/admin.ts";
 import {
   handleStoreTeleportKey,
@@ -24,7 +44,9 @@ import {
 import {
   handleGetWelcome,
   handleDismissWelcome,
+  handleGetUserInviteCodes,
 } from "./routes/welcome.ts";
+import { handleGetUserGroups, handleGetUserAppInvite } from "./routes/external.ts";
 
 console.log(`Starting ${APP_NAME}...`);
 console.log(`Mode: ${IS_DEV ? "development" : "production"}`);
@@ -62,6 +84,13 @@ const server = Bun.serve({
       });
     }
 
+    // Admin page
+    if (path === "/admin" && method === "GET") {
+      return new Response(renderAdminPage(), {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
     // Auth routes
     if (path === "/auth/signup" && method === "POST") {
       return handleSignup(req);
@@ -80,12 +109,12 @@ const server = Bun.serve({
       return handleCreateInviteCode(req);
     }
 
-    if (path.startsWith("/admin/codes/") && !path.endsWith("/toggle") && method === "PUT") {
+    if (path.startsWith("/admin/codes/") && !path.endsWith("/toggle") && !path.endsWith("/groups") && method === "PUT") {
       const code = decodeURIComponent(path.split("/admin/codes/")[1]);
       return handleUpdateInviteCode(req, code);
     }
 
-    if (path.startsWith("/admin/codes/") && !path.endsWith("/toggle") && method === "DELETE") {
+    if (path.startsWith("/admin/codes/") && !path.endsWith("/toggle") && !path.endsWith("/groups") && method === "DELETE") {
       const code = decodeURIComponent(path.split("/admin/codes/")[1]);
       return handleDeleteInviteCode(req, code);
     }
@@ -111,7 +140,7 @@ const server = Bun.serve({
       }
     }
 
-    if (path.startsWith("/admin/apps/") && method === "PUT") {
+    if (path.startsWith("/admin/apps/") && !path.endsWith("/groups") && !path.endsWith("/toggle") && method === "PUT") {
       const id = parseInt(path.split("/admin/apps/")[1], 10);
       if (!isNaN(id)) {
         return handleUpdateApp(req, id);
@@ -122,6 +151,107 @@ const server = Bun.serve({
       const id = parseInt(path.split("/admin/apps/")[1], 10);
       if (!isNaN(id)) {
         return handleDeleteApp(req, id);
+      }
+    }
+
+    // Admin group routes
+    if (path === "/admin/groups" && method === "GET") {
+      return handleGetGroups(req);
+    }
+
+    if (path === "/admin/groups" && method === "POST") {
+      return handleCreateGroup(req);
+    }
+
+    if (path.startsWith("/admin/groups/") && path.endsWith("/toggle") && method === "POST") {
+      const id = parseInt(path.replace("/admin/groups/", "").replace("/toggle", ""), 10);
+      if (!isNaN(id)) {
+        return handleToggleGroup(req, id);
+      }
+    }
+
+    if (path.startsWith("/admin/groups/") && path.endsWith("/users") && method === "GET") {
+      const id = parseInt(path.replace("/admin/groups/", "").replace("/users", ""), 10);
+      if (!isNaN(id)) {
+        return handleGetGroupUsers(req, id);
+      }
+    }
+
+    if (path.startsWith("/admin/groups/") && path.endsWith("/users") && method === "POST") {
+      const id = parseInt(path.replace("/admin/groups/", "").replace("/users", ""), 10);
+      if (!isNaN(id)) {
+        return handleAddUserToGroup(req, id);
+      }
+    }
+
+    // Delete user from group: /admin/groups/:groupId/users/:userId
+    const userGroupMatch = path.match(/^\/admin\/groups\/(\d+)\/users\/(\d+)$/);
+    if (userGroupMatch && method === "DELETE") {
+      const groupId = parseInt(userGroupMatch[1], 10);
+      const userId = parseInt(userGroupMatch[2], 10);
+      if (!isNaN(groupId) && !isNaN(userId)) {
+        return handleRemoveUserFromGroup(req, groupId, userId);
+      }
+    }
+
+    if (path.startsWith("/admin/groups/") && method === "PUT" && !path.includes("/users")) {
+      const id = parseInt(path.split("/admin/groups/")[1], 10);
+      if (!isNaN(id)) {
+        return handleUpdateGroup(req, id);
+      }
+    }
+
+    if (path.startsWith("/admin/groups/") && method === "DELETE" && !path.includes("/users")) {
+      const id = parseInt(path.split("/admin/groups/")[1], 10);
+      if (!isNaN(id)) {
+        return handleDeleteGroup(req, id);
+      }
+    }
+
+    // Invite code groups routes
+    if (path.startsWith("/admin/codes/") && path.endsWith("/groups") && method === "GET") {
+      const code = decodeURIComponent(path.replace("/admin/codes/", "").replace("/groups", ""));
+      return handleGetInviteCodeGroups(req, code);
+    }
+
+    if (path.startsWith("/admin/codes/") && path.endsWith("/groups") && method === "PUT") {
+      const code = decodeURIComponent(path.replace("/admin/codes/", "").replace("/groups", ""));
+      return handleSetInviteCodeGroups(req, code);
+    }
+
+    // Invite code app codes routes (external app invite codes)
+    if (path.startsWith("/admin/codes/") && path.endsWith("/app-codes") && method === "GET") {
+      const code = decodeURIComponent(path.replace("/admin/codes/", "").replace("/app-codes", ""));
+      return handleGetInviteCodeAppCodes(req, code);
+    }
+
+    if (path.startsWith("/admin/codes/") && path.endsWith("/app-codes") && method === "POST") {
+      const code = decodeURIComponent(path.replace("/admin/codes/", "").replace("/app-codes", ""));
+      return handleSetInviteCodeAppCode(req, code);
+    }
+
+    // Delete app code: /admin/codes/:code/app-codes/:appId
+    const appCodeMatch = path.match(/^\/admin\/codes\/([^/]+)\/app-codes\/(\d+)$/);
+    if (appCodeMatch && method === "DELETE") {
+      const code = decodeURIComponent(appCodeMatch[1]);
+      const appId = parseInt(appCodeMatch[2], 10);
+      if (!isNaN(appId)) {
+        return handleDeleteInviteCodeAppCode(req, code, appId);
+      }
+    }
+
+    // App groups routes
+    if (path.startsWith("/admin/apps/") && path.endsWith("/groups") && method === "GET") {
+      const id = parseInt(path.replace("/admin/apps/", "").replace("/groups", ""), 10);
+      if (!isNaN(id)) {
+        return handleGetAppGroups(req, id);
+      }
+    }
+
+    if (path.startsWith("/admin/apps/") && path.endsWith("/groups") && method === "PUT") {
+      const id = parseInt(path.replace("/admin/apps/", "").replace("/groups", ""), 10);
+      if (!isNaN(id)) {
+        return handleSetAppGroups(req, id);
       }
     }
 
@@ -136,6 +266,20 @@ const server = Bun.serve({
 
     if (path === "/api/welcome/dismiss" && method === "POST") {
       return handleDismissWelcome(req);
+    }
+
+    if (path === "/api/user/invite-codes" && method === "GET") {
+      return handleGetUserInviteCodes(req);
+    }
+
+    // External API - for other apps to query user groups
+    if (path === "/api/user/groups" && method === "GET") {
+      return handleGetUserGroups(req);
+    }
+
+    // External API - for other apps to get linked invite codes
+    if (path === "/api/user/app-invite" && method === "GET") {
+      return handleGetUserAppInvite(req);
     }
 
     // Teleport key routes

@@ -1,5 +1,5 @@
 import { signup, recover } from "../services/auth.ts";
-import { isValidInviteCode, useInviteCode } from "../db.ts";
+import { isValidInviteCode, useInviteCode, getGroupsForInviteCode, addUserToGroup } from "../db.ts";
 
 export async function handleSignup(req: Request): Promise<Response> {
   try {
@@ -65,6 +65,12 @@ export async function handleSignup(req: Request): Promise<Response> {
 
     // Increment invite code usage
     useInviteCode(inviteCode);
+
+    // Add user to groups linked to this invite code
+    const linkedGroups = getGroupsForInviteCode(inviteCode);
+    for (const group of linkedGroups) {
+      addUserToGroup(result.user.id, group.id, "invite_code", inviteCode);
+    }
 
     return Response.json({
       success: true,

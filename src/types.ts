@@ -58,3 +58,56 @@ export type InviteCode = {
   welcome_message: string | null; // Markdown welcome message for users
   created_at: string;
 };
+
+// Group for organizing users and controlling app access
+export type Group = {
+  id: number;
+  name: string;
+  description: string | null;
+  active: number; // SQLite boolean (0 or 1)
+  created_at: string;
+};
+
+// User's membership in a group
+export type UserGroup = {
+  id: number;
+  user_id: number;
+  group_id: number;
+  source: "admin" | "invite_code";
+  source_code: string | null; // invite code if source='invite_code'
+  assigned_at: string;
+};
+
+// Invite code's group associations
+export type InviteCodeGroup = {
+  id: number;
+  invite_code_id: number;
+  group_id: number;
+  created_at: string;
+};
+
+// App's group restrictions
+export type AppGroup = {
+  id: number;
+  app_id: number;
+  group_id: number;
+  created_at: string;
+};
+
+// Extended type for API responses - group with user info
+export type UserGroupInfo = {
+  group_id: number;
+  group_name: string;
+  source: "admin" | "invite_code";
+  assigned_at: string;
+};
+
+// External app invite code linked to a Welcome invite code
+// When a user signs up with a Welcome invite, this links them to an app-specific invite code
+export type InviteCodeAppCode = {
+  id: number;
+  invite_code_id: number;
+  app_id: number;
+  external_code: string; // The app's invite code (e.g., MG's "XXXX-XXXX-XXXX")
+  created_at: string;
+};
