@@ -88,21 +88,23 @@ try {
   // Column already exists, ignore
 }
 
-// Migration: Drop old teleport_keys table if it has old schema (ncryptsec instead of encrypted_nsec)
+// Migration: Drop old teleport_keys table if it has old schema (ncryptsec column)
 // This is safe because teleport_keys only stores temporary data that expires in minutes
 try {
   const tableInfo = db.query("PRAGMA table_info(teleport_keys)").all() as { name: string }[];
   const hasOldSchema = tableInfo.some(col => col.name === "ncryptsec");
-  const hasNewSchema = tableInfo.some(col => col.name === "encrypted_nsec");
 
-  if (hasOldSchema && !hasNewSchema) {
-    console.log("[DB] Migrating teleport_keys table to new schema...");
+  if (hasOldSchema) {
+    console.log("[DB] Dropping old teleport_keys table (has ncryptsec column)...");
     db.run("DROP TABLE teleport_keys");
+    console.log("[DB] Old teleport_keys table dropped");
   }
-} catch {
+} catch (err) {
+  console.log("[DB] teleport_keys migration check:", err);
   // Table doesn't exist yet, ignore
 }
 
+// Create teleport_keys table with new schema
 db.run(`
   CREATE TABLE IF NOT EXISTS teleport_keys (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,6 +115,7 @@ db.run(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `);
+console.log("[DB] teleport_keys table ready");
 
 // Groups table
 db.run(`
