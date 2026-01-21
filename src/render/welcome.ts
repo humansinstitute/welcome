@@ -840,7 +840,7 @@ export function renderWelcomePage(): string {
       }
     });
 
-    // Extension login (no invite code needed - existing Nostr user)
+    // Extension login - validates with backend, handles invite codes for new users
     btnExtension.addEventListener('click', async () => {
       if (!window.nostr) {
         showError('No Nostr extension found. Install nos2x, Alby, or similar.');
@@ -850,6 +850,20 @@ export function renderWelcomePage(): string {
       try {
         const pubkey = await window.nostr.getPublicKey();
         const npub = nip19.npubEncode(pubkey);
+        const inviteCode = inviteInput.value.trim() || null;
+
+        // Call backend to validate/register
+        const res = await fetch('/auth/extension-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ npub, inviteCode })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          showError(data.error || 'Login failed');
+          return;
+        }
 
         // Clear any stale session data first
         sessionStorage.clear();
@@ -858,6 +872,9 @@ export function renderWelcomePage(): string {
         sessionStorage.setItem('npub', npub);
         sessionStorage.setItem('loginMethod', 'extension');
         sessionStorage.setItem('onboarded', 'true');
+        if (data.isAdmin) {
+          sessionStorage.setItem('isAdmin', 'true');
+        }
 
         // Fetch and cache profile avatar
         await fetchAndCacheProfile(npub);

@@ -1,5 +1,13 @@
 import { signup, recover } from "../services/auth.ts";
-import { isValidInviteCode, useInviteCode, getGroupsForInviteCode, addUserToGroup } from "../db.ts";
+import { ADMIN_NPUB } from "../config.ts";
+import {
+  isValidInviteCode,
+  useInviteCode,
+  getGroupsForInviteCode,
+  addUserToGroup,
+  getUserByNpub,
+  createExtensionUser,
+} from "../db.ts";
 
 export async function handleSignup(req: Request): Promise<Response> {
   try {
@@ -114,6 +122,86 @@ export async function handleRecover(req: Request): Promise<Response> {
     });
   } catch (err) {
     console.error("Recover error:", err);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Extension login - handles admin bypass, existing users, and new users with invite codes
+export async function handleExtensionLogin(req: Request): Promise<Response> {
+  try {
+    const body = await req.json();
+    const { npub, inviteCode } = body;
+
+    // Validate npub
+    if (!npub || !npub.startsWith("npub1")) {
+      return Response.json(
+        { success: false, error: "Invalid npub format" },
+        { status: 400 }
+      );
+    }
+
+    // 1. Check if admin - bypass everything
+    if (ADMIN_NPUB && npub === ADMIN_NPUB) {
+      return Response.json({
+        success: true,
+        isAdmin: true,
+        isNew: false,
+      });
+    }
+
+    // 2. Check if user already exists
+    const existingUser = getUserByNpub(npub);
+    if (existingUser) {
+      return Response.json({
+        success: true,
+        isAdmin: false,
+        isNew: false,
+      });
+    }
+
+    // 3. New user - require valid invite code
+    if (!inviteCode) {
+      return Response.json(
+        { success: false, error: "Invite code required for new users" },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidInviteCode(inviteCode)) {
+      return Response.json(
+        { success: false, error: "Invalid invite code" },
+        { status: 400 }
+      );
+    }
+
+    // Create extension user
+    const newUser = createExtensionUser(npub, inviteCode);
+    if (!newUser) {
+      return Response.json(
+        { success: false, error: "Failed to create user" },
+        { status: 500 }
+      );
+    }
+
+    // Increment invite code usage
+    useInviteCode(inviteCode);
+
+    // Add user to groups linked to this invite code
+    const linkedGroups = getGroupsForInviteCode(inviteCode);
+    for (const group of linkedGroups) {
+      addUserToGroup(newUser.id, group.id, "invite_code", inviteCode);
+    }
+
+    return Response.json({
+      success: true,
+      isAdmin: false,
+      isNew: true,
+    });
+  } catch (err) {
+    console.error("Extension login error:", err);
     return Response.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

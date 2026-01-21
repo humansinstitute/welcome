@@ -33,8 +33,9 @@ export type App = {
 export type TeleportKey = {
   id: number;
   hash_id: string;
-  ncryptsec: string;
-  expires_at: number; // Unix timestamp
+  encrypted_nsec: string;  // NIP-44 encrypted nsec (was ncryptsec)
+  npub: string;            // User's public key for decryption
+  expires_at: number;      // Unix timestamp
   created_at: string;
 };
 

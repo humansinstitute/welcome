@@ -4,7 +4,7 @@ import { renderWelcomePage } from "./render/welcome.ts";
 import { renderAppsPage } from "./render/apps.ts";
 import { renderOnboardingPage } from "./render/onboarding.ts";
 import { renderAdminPage } from "./render/admin.ts";
-import { handleSignup, handleRecover } from "./routes/auth.ts";
+import { handleSignup, handleRecover, handleExtensionLogin } from "./routes/auth.ts";
 import {
   handleGetInviteCodes,
   handleCreateInviteCode,
@@ -98,6 +98,10 @@ const server = Bun.serve({
 
     if (path === "/auth/recover" && method === "POST") {
       return handleRecover(req);
+    }
+
+    if (path === "/auth/extension-login" && method === "POST") {
+      return handleExtensionLogin(req);
     }
 
     // Admin routes

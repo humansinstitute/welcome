@@ -487,8 +487,8 @@ export function renderAppsPage(): string {
       color: var(--muted);
     }
 
-    /* PIN Modal */
-    .pin-modal-overlay {
+    /* Teleport Modal */
+    .teleport-modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(61, 56, 51, 0.6);
@@ -499,15 +499,15 @@ export function renderAppsPage(): string {
       backdrop-filter: blur(4px);
     }
 
-    .pin-modal-overlay[hidden] {
+    .teleport-modal-overlay[hidden] {
       display: none;
     }
 
-    .pin-modal {
+    .teleport-modal {
       background: var(--surface);
       border-radius: var(--radius-lg);
       padding: 2rem;
-      max-width: 360px;
+      max-width: 400px;
       width: 90%;
       position: relative;
       box-shadow: var(--shadow-warm);
@@ -515,7 +515,7 @@ export function renderAppsPage(): string {
       text-align: center;
     }
 
-    .pin-modal-close {
+    .teleport-modal-close {
       position: absolute;
       top: 0.75rem;
       right: 0.75rem;
@@ -528,42 +528,31 @@ export function renderAppsPage(): string {
       line-height: 1;
     }
 
-    .pin-modal-close:hover {
+    .teleport-modal-close:hover {
       color: var(--text);
     }
 
-    .pin-modal h2 {
+    .teleport-modal h2 {
       font-family: var(--font-serif);
       font-size: 1.25rem;
       font-weight: 400;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
     }
 
-    .pin-modal p {
+    .teleport-modal p {
       color: var(--muted);
       font-size: 0.9rem;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .teleport-instructions {
+      color: var(--text-warm);
+      font-size: 0.85rem;
       margin-bottom: 1.25rem;
     }
 
-    .pin-input {
-      width: 100%;
-      padding: 0.875rem 1rem;
-      font-size: 1.25rem;
-      font-family: monospace;
-      text-align: center;
-      letter-spacing: 0.25em;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      margin-bottom: 1rem;
-    }
-
-    .pin-input:focus {
-      outline: none;
-      border-color: var(--purple);
-    }
-
-    .pin-submit {
+    .teleport-btn {
       width: 100%;
       padding: 0.875rem;
       font-size: 1rem;
@@ -577,79 +566,23 @@ export function renderAppsPage(): string {
       transition: background 0.2s;
     }
 
-    .pin-submit:hover {
+    .teleport-btn:hover {
       background: var(--purple-light);
     }
 
-    .pin-submit:disabled {
+    .teleport-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
-    .pin-error {
+    .teleport-error {
       color: var(--error);
       font-size: 0.875rem;
       margin-top: 0.75rem;
     }
 
-    .pin-error[hidden] {
+    .teleport-error[hidden] {
       display: none;
-    }
-
-    .pin-display {
-      display: flex;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .pin-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--border-soft);
-      border: 2px solid var(--border);
-      transition: background 150ms ease, border-color 150ms ease;
-    }
-
-    .pin-dot.filled {
-      background: var(--purple);
-      border-color: var(--purple);
-    }
-
-    .pin-keypad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-      max-width: 240px;
-      margin: 0 auto 1rem;
-    }
-
-    .pin-keypad button {
-      width: 100%;
-      aspect-ratio: 1;
-      font-size: 1.5rem;
-      font-weight: 600;
-      border-radius: 50%;
-      border: 1px solid var(--border);
-      background: var(--surface-warm);
-      color: var(--text);
-      cursor: pointer;
-      transition: background 120ms ease, transform 100ms ease;
-    }
-
-    .pin-keypad button:hover {
-      background: var(--border-soft);
-    }
-
-    .pin-keypad button:active {
-      transform: scale(0.95);
-      background: var(--border);
-    }
-
-    .pin-keypad .pin-key-action {
-      font-size: 0.9rem;
-      font-weight: 500;
     }
 
     /* Welcome Message Component */
@@ -1022,42 +955,22 @@ export function renderAppsPage(): string {
     </div>
   </div>
 
-  <!-- PIN Modal for Key Teleport -->
-  <div class="pin-modal-overlay" id="pin-modal" hidden>
-    <div class="pin-modal">
-      <button class="pin-modal-close" type="button" id="pin-close" aria-label="Close">&times;</button>
+  <!-- Teleport Modal for Key Transfer -->
+  <div class="teleport-modal-overlay" id="teleport-modal" hidden>
+    <div class="teleport-modal">
+      <button class="teleport-modal-close" type="button" id="teleport-close" aria-label="Close">&times;</button>
       <h2>Transfer Identity</h2>
-      <p id="pin-modal-desc">Enter a 6-digit numerical PIN to securely log in to <span id="pin-app-name"></span>. You will be prompted for this PIN again in <span id="pin-app-name-repeat"></span> to complete the process.</p>
-      <div class="pin-display" id="pin-display">
-        <span class="pin-dot" data-pin-dot></span>
-        <span class="pin-dot" data-pin-dot></span>
-        <span class="pin-dot" data-pin-dot></span>
-        <span class="pin-dot" data-pin-dot></span>
-        <span class="pin-dot" data-pin-dot></span>
-        <span class="pin-dot" data-pin-dot></span>
-      </div>
-      <p class="pin-error" id="pin-error" hidden></p>
-      <div class="pin-keypad" id="pin-keypad">
-        <button type="button" data-pin-key="1">1</button>
-        <button type="button" data-pin-key="2">2</button>
-        <button type="button" data-pin-key="3">3</button>
-        <button type="button" data-pin-key="4">4</button>
-        <button type="button" data-pin-key="5">5</button>
-        <button type="button" data-pin-key="6">6</button>
-        <button type="button" data-pin-key="7">7</button>
-        <button type="button" data-pin-key="8">8</button>
-        <button type="button" data-pin-key="9">9</button>
-        <button type="button" data-pin-key="clear" class="pin-key-action">Clear</button>
-        <button type="button" data-pin-key="0">0</button>
-        <button type="button" data-pin-key="back" class="pin-key-action">&larr;</button>
-      </div>
+      <p>Click below to copy your unlock code and open <strong id="teleport-app-name"></strong>.</p>
+      <p class="teleport-instructions">Paste the code when prompted to complete login.</p>
+      <button id="teleport-copy-open" class="teleport-btn">Copy Code &amp; Open App</button>
+      <p class="teleport-error" id="teleport-error" hidden></p>
     </div>
   </div>
 
   <script type="module">
-    import { nip19, finalizeEvent, getPublicKey } from 'https://esm.sh/nostr-tools@2.7.2';
+    import { nip19, finalizeEvent, getPublicKey, generateSecretKey } from 'https://esm.sh/nostr-tools@2.7.2';
     import { Relay } from 'https://esm.sh/nostr-tools@2.7.2/relay';
-    import { encrypt as nip49Encrypt } from 'https://esm.sh/nostr-tools@2.7.2/nip49';
+    import * as nip44 from 'https://esm.sh/nostr-tools@2.7.2/nip44';
 
     const RELAYS = ${JSON.stringify(NOSTR_RELAYS)};
     const ADMIN_NPUB = ${JSON.stringify(ADMIN_NPUB)};
@@ -1075,18 +988,12 @@ export function renderAppsPage(): string {
     const inviteCodesHeader = document.getElementById('invite-codes-header');
     const inviteCodesList = document.getElementById('invite-codes-list');
 
-    // PIN modal elements
-    const pinModal = document.getElementById('pin-modal');
-    const pinCloseBtn = document.getElementById('pin-close');
-    const pinKeypad = document.getElementById('pin-keypad');
-    const pinDots = document.querySelectorAll('[data-pin-dot]');
-    const pinError = document.getElementById('pin-error');
-    const pinAppName = document.getElementById('pin-app-name');
-    const pinAppNameRepeat = document.getElementById('pin-app-name-repeat');
-
-    // PIN state
-    const PIN_LENGTH = 6;
-    let currentPin = '';
+    // Teleport modal elements
+    const teleportModal = document.getElementById('teleport-modal');
+    const teleportCloseBtn = document.getElementById('teleport-close');
+    const teleportCopyOpenBtn = document.getElementById('teleport-copy-open');
+    const teleportError = document.getElementById('teleport-error');
+    const teleportAppName = document.getElementById('teleport-app-name');
 
     // Current teleport target
     let teleportTarget = null;
@@ -1243,8 +1150,8 @@ export function renderAppsPage(): string {
           if (!app) return;
 
           if (app.teleport_pubkey && nsec) {
-            // Show PIN modal for teleport
-            showPinModal(app);
+            // Show teleport modal for key transfer
+            showTeleportModal(app);
           } else {
             // Direct navigation
             window.open(app.url, '_blank');
@@ -1259,75 +1166,29 @@ export function renderAppsPage(): string {
       return div.innerHTML;
     }
 
-    function updatePinDisplay() {
-      pinDots.forEach((dot, index) => {
-        if (index < currentPin.length) {
-          dot.classList.add('filled');
-        } else {
-          dot.classList.remove('filled');
-        }
-      });
+    // Teleport modal helper functions
+    function showTeleportError(message) {
+      teleportError.textContent = message;
+      teleportError.hidden = false;
     }
 
-    function resetPinEntry() {
-      currentPin = '';
-      updatePinDisplay();
+    function hideTeleportError() {
+      teleportError.hidden = true;
     }
 
-    function showPinError(message) {
-      pinError.textContent = message;
-      pinError.hidden = false;
-    }
-
-    function hidePinError() {
-      pinError.hidden = true;
-    }
-
-    function showPinModal(app) {
+    function showTeleportModal(app) {
       teleportTarget = app;
-      pinAppName.textContent = app.name;
-      pinAppNameRepeat.textContent = app.name;
-      resetPinEntry();
-      hidePinError();
-      pinModal.hidden = false;
+      teleportAppName.textContent = app.name;
+      hideTeleportError();
+      teleportCopyOpenBtn.disabled = false;
+      teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
+      teleportModal.hidden = false;
     }
 
-    function hidePinModal() {
-      pinModal.hidden = true;
+    function hideTeleportModal() {
+      teleportModal.hidden = true;
       teleportTarget = null;
-      resetPinEntry();
-      hidePinError();
-    }
-
-    async function handlePinComplete() {
-      if (currentPin.length !== PIN_LENGTH) return;
-
-      hidePinError();
-      await performTeleport(currentPin);
-    }
-
-    function handlePinKeyPress(key) {
-      hidePinError();
-
-      if (key === 'clear') {
-        resetPinEntry();
-        return;
-      }
-
-      if (key === 'back') {
-        currentPin = currentPin.slice(0, -1);
-        updatePinDisplay();
-        return;
-      }
-
-      if (currentPin.length >= PIN_LENGTH) return;
-
-      currentPin += key;
-      updatePinDisplay();
-
-      if (currentPin.length === PIN_LENGTH) {
-        handlePinComplete();
-      }
+      hideTeleportError();
     }
 
     function generateHashId() {
@@ -1336,16 +1197,25 @@ export function renderAppsPage(): string {
       return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    async function performTeleport(pin) {
+    async function performTeleport() {
       if (!teleportTarget || !nsec) return;
+
+      teleportCopyOpenBtn.disabled = true;
+      teleportCopyOpenBtn.textContent = 'Processing...';
+      hideTeleportError();
 
       try {
         // Decode nsec to get secret key bytes
         const { type, data: secretKey } = nip19.decode(nsec);
         if (type !== 'nsec') throw new Error('Invalid nsec');
 
-        // Encrypt with NIP-49 using the PIN
-        const ncryptsec = nip49Encrypt(secretKey, pin);
+        // Generate throwaway keypair
+        const throwawayPrivkey = generateSecretKey();
+        const throwawayPubkey = getPublicKey(throwawayPrivkey);
+
+        // Encrypt nsec with NIP-44 using conversation key(user, throwaway)
+        const conversationKey = nip44.v2.utils.getConversationKey(secretKey, throwawayPubkey);
+        const encryptedNsec = nip44.v2.encrypt(nsec, conversationKey);
 
         // Generate unique hash ID
         const hashId = generateHashId();
@@ -1359,7 +1229,8 @@ export function renderAppsPage(): string {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             hashId,
-            ncryptsec,
+            encryptedNsec,
+            npub,  // User's public key - needed by remote app for decryption
             appId: teleportTarget.id,
             baseUrl
           })
@@ -1379,63 +1250,39 @@ export function renderAppsPage(): string {
           teleportUrl += '&ic=' + encodeURIComponent(inviteCode);
         }
 
+        // Copy throwaway nsec to clipboard (the unlock code)
+        const throwawayNsec = nip19.nsecEncode(throwawayPrivkey);
+        await navigator.clipboard.writeText(throwawayNsec);
+
+        // Open remote app
         window.open(teleportUrl, '_blank');
 
-        hidePinModal();
+        hideTeleportModal();
       } catch (err) {
         console.error('Teleport error:', err);
-        showPinError(err.message || 'Failed to transfer identity');
-        resetPinEntry();
+        showTeleportError(err.message || 'Failed to transfer identity');
+        teleportCopyOpenBtn.disabled = false;
+        teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
       }
     }
 
-    // PIN Modal Event Listeners
-    pinCloseBtn.addEventListener('click', hidePinModal);
+    // Teleport Modal Event Listeners
+    teleportCloseBtn.addEventListener('click', hideTeleportModal);
 
-    pinModal.addEventListener('click', (e) => {
-      if (e.target === pinModal) {
-        hidePinModal();
+    teleportModal.addEventListener('click', (e) => {
+      if (e.target === teleportModal) {
+        hideTeleportModal();
       }
     });
 
-    // Keypad button clicks
-    pinKeypad.addEventListener('click', (e) => {
-      const target = e.target;
-      if (!target.hasAttribute('data-pin-key')) return;
-      const key = target.getAttribute('data-pin-key');
-      handlePinKeyPress(key);
-    });
+    // Copy & Open button click
+    teleportCopyOpenBtn.addEventListener('click', performTeleport);
 
-    // Keyboard input for PIN (when modal is visible)
+    // Keyboard escape to close teleport modal
     document.addEventListener('keydown', (e) => {
-      // Only handle when PIN modal is visible
-      if (pinModal.hidden) return;
-
-      // Handle escape to close
+      if (teleportModal.hidden) return;
       if (e.key === 'Escape') {
-        hidePinModal();
-        return;
-      }
-
-      // Handle number keys (0-9)
-      if (/^[0-9]$/.test(e.key)) {
-        e.preventDefault();
-        handlePinKeyPress(e.key);
-        return;
-      }
-
-      // Handle backspace
-      if (e.key === 'Backspace') {
-        e.preventDefault();
-        handlePinKeyPress('back');
-        return;
-      }
-
-      // Handle delete/clear
-      if (e.key === 'Delete') {
-        e.preventDefault();
-        handlePinKeyPress('clear');
-        return;
+        hideTeleportModal();
       }
     });
 

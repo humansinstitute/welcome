@@ -76,7 +76,7 @@ export async function handleGetPublicApps(req: Request): Promise<Response> {
 export async function handleStoreTeleportKey(req: Request): Promise<Response> {
   try {
     const body = await req.json();
-    const { hashId, ncryptsec, appId, baseUrl } = body;
+    const { hashId, encryptedNsec, npub, appId, baseUrl } = body;
 
     if (!hashId || typeof hashId !== "string") {
       return Response.json(
@@ -85,9 +85,16 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
       );
     }
 
-    if (!ncryptsec || typeof ncryptsec !== "string") {
+    if (!encryptedNsec || typeof encryptedNsec !== "string") {
       return Response.json(
-        { success: false, error: "ncryptsec is required" },
+        { success: false, error: "encryptedNsec is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!npub || typeof npub !== "string") {
+      return Response.json(
+        { success: false, error: "npub is required" },
         { status: 400 }
       );
     }
@@ -129,7 +136,7 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
     const expiresAt = Math.floor(Date.now() / 1000) + TELEPORT_EXPIRY_SECONDS;
 
     // Store the key
-    const teleportKey = storeTeleportKey(hashId, ncryptsec, expiresAt);
+    const teleportKey = storeTeleportKey(hashId, encryptedNsec, npub, expiresAt);
     if (!teleportKey) {
       return Response.json(
         { success: false, error: "Failed to store teleport key" },
@@ -138,10 +145,12 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
     }
 
     // Create the payload for the receiving app
+    // Include npub so the remote app can derive the conversation key for decryption
     const apiRoute = `${baseUrl || ""}/api/keys`;
     const payload = {
       apiRoute,
       hash_id: hashId,
+      npub,  // User's public key - needed by remote app for NIP-44 decryption
       timestamp: expiresAt
     };
 
@@ -204,7 +213,8 @@ export async function handleGetTeleportKey(hashId: string): Promise<Response> {
 
     return Response.json({
       success: true,
-      ncryptsec: teleportKey.ncryptsec
+      encryptedNsec: teleportKey.encrypted_nsec,
+      npub: teleportKey.npub
     });
   } catch (err) {
     console.error("Get teleport key error:", err);
