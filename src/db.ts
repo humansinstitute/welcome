@@ -503,11 +503,15 @@ export function storeTeleportKey(
   npub: string,
   expiresAt: number
 ): TeleportKey | null {
-  if (!hashId || !encryptedNsec || !npub || !expiresAt) return null;
+  if (!hashId || !encryptedNsec || !npub || !expiresAt) {
+    console.error("[DB] storeTeleportKey: missing required params", { hashId: !!hashId, encryptedNsec: !!encryptedNsec, npub: !!npub, expiresAt: !!expiresAt });
+    return null;
+  }
   try {
     const key = storeTeleportKeyStmt.get(hashId, encryptedNsec, npub, expiresAt) as TeleportKey | undefined;
     return key ?? null;
-  } catch {
+  } catch (err) {
+    console.error("[DB] storeTeleportKey error:", err);
     return null;
   }
 }
