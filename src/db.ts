@@ -88,11 +88,27 @@ try {
   // Column already exists, ignore
 }
 
+// Migration: Drop old teleport_keys table if it has old schema (ncryptsec instead of encrypted_nsec)
+// This is safe because teleport_keys only stores temporary data that expires in minutes
+try {
+  const tableInfo = db.query("PRAGMA table_info(teleport_keys)").all() as { name: string }[];
+  const hasOldSchema = tableInfo.some(col => col.name === "ncryptsec");
+  const hasNewSchema = tableInfo.some(col => col.name === "encrypted_nsec");
+
+  if (hasOldSchema && !hasNewSchema) {
+    console.log("[DB] Migrating teleport_keys table to new schema...");
+    db.run("DROP TABLE teleport_keys");
+  }
+} catch {
+  // Table doesn't exist yet, ignore
+}
+
 db.run(`
   CREATE TABLE IF NOT EXISTS teleport_keys (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     hash_id TEXT NOT NULL UNIQUE,
-    ncryptsec TEXT NOT NULL,
+    encrypted_nsec TEXT NOT NULL,
+    npub TEXT NOT NULL,
     expires_at INTEGER NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
@@ -233,6 +249,27 @@ export function createUser(
     inviteCode
   ) as User | undefined;
   return user ?? null;
+}
+
+// Create user for extension login (no email/password, just npub + invite code)
+// Uses placeholder values for required fields since extension users authenticate via their extension
+export function createExtensionUser(npub: string, inviteCode: string): User | null {
+  if (!npub || !inviteCode) return null;
+  // Use npub-based placeholder email to satisfy unique constraint
+  const placeholderEmail = `${npub}@extension.local`;
+  try {
+    const user = createUserStmt.get(
+      placeholderEmail,
+      npub,
+      "", // no ncryptsec for extension users
+      "", // no password hash
+      "", // no salt
+      inviteCode
+    ) as User | undefined;
+    return user ?? null;
+  } catch {
+    return null; // User already exists or other error
+  }
 }
 
 export function updateOnboardingStatus(
@@ -451,8 +488,8 @@ export function dismissWelcome(npub: string): User | null {
 }
 
 // Teleport key functions
-const storeTeleportKeyStmt = db.query<TeleportKey, [string, string, number]>(
-  `INSERT INTO teleport_keys (hash_id, ncryptsec, expires_at) VALUES (?, ?, ?) RETURNING *`
+const storeTeleportKeyStmt = db.query<TeleportKey, [string, string, string, number]>(
+  `INSERT INTO teleport_keys (hash_id, encrypted_nsec, npub, expires_at) VALUES (?, ?, ?, ?) RETURNING *`
 );
 const getTeleportKeyStmt = db.query<TeleportKey, [string]>(
   `SELECT * FROM teleport_keys WHERE hash_id = ?`
@@ -462,12 +499,13 @@ const cleanupExpiredKeysStmt = db.prepare("DELETE FROM teleport_keys WHERE expir
 
 export function storeTeleportKey(
   hashId: string,
-  ncryptsec: string,
+  encryptedNsec: string,
+  npub: string,
   expiresAt: number
 ): TeleportKey | null {
-  if (!hashId || !ncryptsec || !expiresAt) return null;
+  if (!hashId || !encryptedNsec || !npub || !expiresAt) return null;
   try {
-    const key = storeTeleportKeyStmt.get(hashId, ncryptsec, expiresAt) as TeleportKey | undefined;
+    const key = storeTeleportKeyStmt.get(hashId, encryptedNsec, npub, expiresAt) as TeleportKey | undefined;
     return key ?? null;
   } catch {
     return null;
