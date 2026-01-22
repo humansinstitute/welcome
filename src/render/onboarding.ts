@@ -426,6 +426,57 @@ export function renderOnboardingPage(): string {
   <script type="module">
     import { finalizeEvent, getPublicKey, nip19 } from 'https://esm.sh/nostr-tools@2.7.2';
     import { Relay } from 'https://esm.sh/nostr-tools@2.7.2/relay';
+    import Dexie from 'https://esm.sh/dexie@4.0.4';
+
+    // Initialize Dexie database
+    const db = new Dexie('OtherStuffDB');
+    db.version(2).stores({
+      profiles: 'npub, name, about, picture, nip05, updatedAt',
+      secrets: 'npub'
+    });
+
+    // Import key from stored format
+    async function importKey(keyData) {
+      return crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    // Decrypt nsec with AES-GCM
+    async function decryptSecret(ciphertext, key, iv) {
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        ciphertext
+      );
+      const decoder = new TextDecoder();
+      return decoder.decode(decrypted);
+    }
+
+    // Load and decrypt nsec from Dexie
+    async function loadDecryptedNsec(npub) {
+      const stored = await db.secrets.get(npub);
+      if (!stored) return null;
+
+      const keyData = sessionStorage.getItem('derivedKey');
+      if (!keyData) return null;
+
+      try {
+        const key = await importKey(new Uint8Array(JSON.parse(keyData)));
+        return await decryptSecret(
+          new Uint8Array(stored.ciphertext),
+          key,
+          new Uint8Array(stored.iv)
+        );
+      } catch (err) {
+        console.warn('Failed to decrypt nsec:', err);
+        return null;
+      }
+    }
 
     const RELAYS = ${JSON.stringify(NOSTR_RELAYS)};
 
@@ -441,11 +492,21 @@ export function renderOnboardingPage(): string {
 
     // Check if logged in
     const npub = sessionStorage.getItem('npub');
-    const nsec = sessionStorage.getItem('nsec');
+    let nsec = sessionStorage.getItem('nsec');  // May be null if using encrypted storage
 
     if (!npub) {
       window.location.href = '/';
     }
+
+    // Load nsec from encrypted Dexie storage if needed
+    (async () => {
+      if (!nsec && npub) {
+        const decrypted = await loadDecryptedNsec(npub);
+        if (decrypted) {
+          nsec = decrypted;
+        }
+      }
+    })();
 
     function showAvatar(url) {
       avatarImg.src = url;
