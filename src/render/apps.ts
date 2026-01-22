@@ -360,6 +360,146 @@ export function renderAppsPage(): string {
       border: 1px solid var(--border-soft);
     }
 
+    /* Export Key Section */
+    .export-key-section {
+      display: block;
+      margin: 1.5rem 0 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .export-key-section.hidden {
+      display: none;
+    }
+
+    .export-key-section h3 {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 400;
+      margin: 0 0 0.75rem;
+      color: var(--text);
+    }
+
+    .export-key-field {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .export-key-field input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      font-family: monospace;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-warm);
+      color: var(--text);
+    }
+
+    .export-key-field button {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .export-key-field button:hover {
+      border-color: var(--accent);
+      background: var(--surface-warm);
+    }
+
+    .export-key-download {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-family: var(--font-body);
+      background: var(--surface-warm);
+      color: var(--text);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .export-key-download:hover {
+      border-color: var(--accent);
+    }
+
+    /* Export Key Password Modal */
+    .export-password-form {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: var(--surface-warm);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-soft);
+    }
+
+    .export-password-form label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+
+    .export-password-form input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    .export-password-form input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .export-password-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .export-password-actions button {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .export-password-actions button[type="button"] {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .export-password-actions button[type="submit"] {
+      background: var(--purple);
+      color: white;
+      border: none;
+    }
+
+    .export-password-actions button[type="submit"]:hover {
+      background: var(--purple-light);
+    }
+
+    .export-key-error {
+      color: var(--error);
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
     .profile-edit-btn {
       width: 100%;
       padding: 0.75rem;
@@ -929,6 +1069,27 @@ export function renderAppsPage(): string {
         </div>
         <p class="profile-about" id="profile-about"></p>
         <p class="profile-npub" id="profile-npub-display"></p>
+
+        <!-- Export Key Section (only shown if user has nsec) -->
+        <div class="export-key-section hidden" id="export-key-section">
+          <h3>Export Key</h3>
+          <div class="export-key-field">
+            <input type="password" id="export-key-input" readonly />
+            <button type="button" id="export-key-toggle" title="Show/hide key">👁</button>
+            <button type="button" id="export-key-copy" title="Copy to clipboard">Copy</button>
+          </div>
+          <button type="button" class="export-key-download" id="export-key-download">Download Encrypted Backup</button>
+          <form class="export-password-form" id="export-password-form" hidden>
+            <label for="export-password-input">Enter a password to encrypt your backup:</label>
+            <input type="password" id="export-password-input" placeholder="Password" autocomplete="new-password" />
+            <div class="export-password-actions">
+              <button type="button" id="export-password-cancel">Cancel</button>
+              <button type="submit" id="export-password-submit">Download</button>
+            </div>
+          </form>
+          <p class="export-key-error" id="export-key-error" hidden></p>
+        </div>
+
         <button type="button" class="profile-edit-btn" id="profile-edit-btn">Edit Profile</button>
       </div>
 
@@ -971,6 +1132,135 @@ export function renderAppsPage(): string {
     import { nip19, finalizeEvent, getPublicKey, generateSecretKey } from 'https://esm.sh/nostr-tools@2.7.2';
     import { Relay } from 'https://esm.sh/nostr-tools@2.7.2/relay';
     import * as nip44 from 'https://esm.sh/nostr-tools@2.7.2/nip44';
+    import { encrypt as nip49Encrypt } from 'https://esm.sh/nostr-tools@2.7.2/nip49';
+    import Dexie from 'https://esm.sh/dexie@4.0.4';
+
+    // Initialize Dexie database for profile and secrets
+    const db = new Dexie('OtherStuffDB');
+    db.version(2).stores({
+      profiles: 'npub, name, about, picture, nip05, updatedAt',
+      secrets: 'npub'  // Stores encrypted nsec with salt and iv
+    });
+
+    // ============================================
+    // Web Crypto helpers for encrypted key storage
+    // ============================================
+
+    // Derive an AES-GCM key from password using PBKDF2
+    async function deriveKeyFromPassword(password, salt) {
+      const encoder = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+      );
+      return crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: salt,
+          iterations: 100000,
+          hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        true,  // extractable for storage
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    // Export CryptoKey to storable format
+    async function exportKey(key) {
+      const exported = await crypto.subtle.exportKey('raw', key);
+      return new Uint8Array(exported);
+    }
+
+    // Import key from stored format
+    async function importKey(keyData) {
+      return crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    // Encrypt nsec with AES-GCM
+    async function encryptSecret(plaintext, key) {
+      const encoder = new TextEncoder();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        encoder.encode(plaintext)
+      );
+      return {
+        ciphertext: new Uint8Array(encrypted),
+        iv: iv
+      };
+    }
+
+    // Decrypt nsec with AES-GCM
+    async function decryptSecret(ciphertext, key, iv) {
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        ciphertext
+      );
+      const decoder = new TextDecoder();
+      return decoder.decode(decrypted);
+    }
+
+    // Store encrypted nsec in Dexie
+    async function storeEncryptedNsec(npub, nsec, password) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKeyFromPassword(password, salt);
+      const { ciphertext, iv } = await encryptSecret(nsec, key);
+      const exportedKey = await exportKey(key);
+
+      await db.secrets.put({
+        npub,
+        ciphertext: Array.from(ciphertext),
+        iv: Array.from(iv),
+        salt: Array.from(salt)
+      });
+
+      // Store derived key in sessionStorage for this session only
+      sessionStorage.setItem('derivedKey', JSON.stringify(Array.from(exportedKey)));
+
+      return true;
+    }
+
+    // Load and decrypt nsec from Dexie
+    async function loadDecryptedNsec(npub) {
+      const stored = await db.secrets.get(npub);
+      if (!stored) return null;
+
+      const keyData = sessionStorage.getItem('derivedKey');
+      if (!keyData) return null;
+
+      try {
+        const key = await importKey(new Uint8Array(JSON.parse(keyData)));
+        return await decryptSecret(
+          new Uint8Array(stored.ciphertext),
+          key,
+          new Uint8Array(stored.iv)
+        );
+      } catch (err) {
+        console.warn('Failed to decrypt nsec:', err);
+        return null;
+      }
+    }
+
+    // Check if we have encrypted nsec stored
+    async function hasStoredNsec(npub) {
+      const stored = await db.secrets.get(npub);
+      return !!stored;
+    }
+
+    // ============================================
 
     const RELAYS = ${JSON.stringify(NOSTR_RELAYS)};
     const ADMIN_NPUB = ${JSON.stringify(ADMIN_NPUB)};
@@ -1018,6 +1308,17 @@ export function renderAppsPage(): string {
     const profileEditCancel = document.getElementById('profile-edit-cancel');
     const profileEditSave = document.getElementById('profile-edit-save');
 
+    // Export key elements
+    const exportKeySection = document.getElementById('export-key-section');
+    const exportKeyInput = document.getElementById('export-key-input');
+    const exportKeyToggle = document.getElementById('export-key-toggle');
+    const exportKeyCopy = document.getElementById('export-key-copy');
+    const exportKeyDownload = document.getElementById('export-key-download');
+    const exportPasswordForm = document.getElementById('export-password-form');
+    const exportPasswordInput = document.getElementById('export-password-input');
+    const exportPasswordCancel = document.getElementById('export-password-cancel');
+    const exportKeyError = document.getElementById('export-key-error');
+
     // Welcome message elements
     const welcomeMessageCard = document.getElementById('welcome-message-card');
     const welcomeMessageHeader = document.getElementById('welcome-message-header');
@@ -1046,7 +1347,8 @@ export function renderAppsPage(): string {
     }
 
     // Cache profile data in sessionStorage
-    function cacheProfile(profile) {
+    async function cacheProfile(profile) {
+      // Save to sessionStorage for quick access
       if (profile.picture) {
         sessionStorage.setItem('avatarUrl', profile.picture);
       } else {
@@ -1057,6 +1359,33 @@ export function renderAppsPage(): string {
       } else {
         sessionStorage.removeItem('displayName');
       }
+
+      // Save to Dexie for persistence across sessions
+      if (npub) {
+        try {
+          await db.profiles.put({
+            npub,
+            name: profile.name || '',
+            about: profile.about || '',
+            picture: profile.picture || '',
+            nip05: profile.nip05 || '',
+            updatedAt: Date.now()
+          });
+        } catch (err) {
+          console.warn('Failed to cache profile to Dexie:', err);
+        }
+      }
+    }
+
+    // Load cached profile from Dexie
+    async function loadCachedProfile() {
+      if (!npub) return null;
+      try {
+        return await db.profiles.get(npub);
+      } catch (err) {
+        console.warn('Failed to load cached profile from Dexie:', err);
+        return null;
+      }
     }
 
     // Validate session - if npub is missing or invalid, clear and redirect
@@ -1066,9 +1395,26 @@ export function renderAppsPage(): string {
     } else if (!onboarded) {
       window.location.href = '/onboarding';
     } else {
-      // Use cached avatar if available, otherwise show fallback
-      updateHeaderAvatar(cachedAvatar, cachedName);
-      userNpubEl.textContent = npub;
+      // Initialize with Dexie cached profile or sessionStorage fallback
+      (async () => {
+        let displayName = cachedName;
+        let avatarUrl = cachedAvatar;
+
+        // Try to load from Dexie if sessionStorage is empty
+        if (!displayName || !avatarUrl) {
+          const cached = await loadCachedProfile();
+          if (cached) {
+            displayName = cached.name || displayName;
+            avatarUrl = cached.picture || avatarUrl;
+            // Sync back to sessionStorage
+            if (cached.name) sessionStorage.setItem('displayName', cached.name);
+            if (cached.picture) sessionStorage.setItem('avatarUrl', cached.picture);
+          }
+        }
+
+        updateHeaderAvatar(avatarUrl, displayName);
+        userNpubEl.textContent = displayName || npub.slice(0, 12) + '...';
+      })();
     }
 
     // Toggle dropdown
@@ -1548,9 +1894,10 @@ export function renderAppsPage(): string {
         nip05: profile?.nip05 || ''
       };
 
-      // Cache profile and update header avatar
+      // Cache profile and update header avatar and dropdown name
       cacheProfile(currentProfile);
       updateHeaderAvatar(currentProfile.picture, currentProfile.name);
+      userNpubEl.textContent = currentProfile.name || npub.slice(0, 12) + '...';
 
       // Avatar
       if (currentProfile.picture) {
@@ -1581,6 +1928,19 @@ export function renderAppsPage(): string {
 
       // Npub
       profileNpubDisplay.textContent = npub;
+
+      // Export key section - only show if user has nsec
+      const currentNsec = sessionStorage.getItem('nsec');
+      if (currentNsec) {
+        exportKeySection.classList.remove('hidden');
+        exportKeyInput.value = currentNsec;
+        exportKeyInput.type = 'password';
+        exportKeyToggle.textContent = '👁';
+        exportPasswordForm.hidden = true;
+        exportKeyError.hidden = true;
+      } else {
+        exportKeySection.classList.add('hidden');
+      }
 
       // Only show edit button if we have nsec
       profileEditBtn.hidden = !nsec;
@@ -1695,6 +2055,121 @@ export function renderAppsPage(): string {
     profileEditForm.addEventListener('submit', (e) => {
       e.preventDefault();
       saveProfile();
+    });
+
+    // === Export Key Handlers ===
+
+    // Toggle key visibility
+    exportKeyToggle.addEventListener('click', () => {
+      if (exportKeyInput.type === 'password') {
+        exportKeyInput.type = 'text';
+        exportKeyToggle.textContent = '🙈';
+      } else {
+        exportKeyInput.type = 'password';
+        exportKeyToggle.textContent = '👁';
+      }
+    });
+
+    // Copy key with confirmation
+    exportKeyCopy.addEventListener('click', async () => {
+      const confirmed = confirm(
+        'Warning: Your private key gives full control of your Nostr identity.\\n\\n' +
+        'Only copy this if you understand the risks and are in a secure environment.\\n\\n' +
+        'Continue?'
+      );
+      if (!confirmed) return;
+
+      try {
+        const keyToCopy = sessionStorage.getItem('nsec');
+        if (!keyToCopy) {
+          exportKeyError.textContent = 'No key available to copy';
+          exportKeyError.hidden = false;
+          return;
+        }
+        await navigator.clipboard.writeText(keyToCopy);
+        exportKeyCopy.textContent = 'Copied!';
+        setTimeout(() => {
+          exportKeyCopy.textContent = 'Copy';
+        }, 2000);
+      } catch (err) {
+        exportKeyError.textContent = 'Failed to copy to clipboard';
+        exportKeyError.hidden = false;
+      }
+    });
+
+    // Show download password form
+    exportKeyDownload.addEventListener('click', () => {
+      exportPasswordForm.hidden = false;
+      exportPasswordInput.value = '';
+      exportPasswordInput.focus();
+      exportKeyError.hidden = true;
+    });
+
+    // Cancel download
+    exportPasswordCancel.addEventListener('click', () => {
+      exportPasswordForm.hidden = true;
+      exportPasswordInput.value = '';
+    });
+
+    // Download encrypted backup
+    exportPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      exportKeyError.hidden = true;
+
+      const password = exportPasswordInput.value;
+      if (!password) {
+        exportKeyError.textContent = 'Please enter a password';
+        exportKeyError.hidden = false;
+        return;
+      }
+
+      try {
+        // Get nsec from sessionStorage
+        const currentNsec = sessionStorage.getItem('nsec');
+        if (!currentNsec) {
+          throw new Error('No key available');
+        }
+
+        // Decode nsec to get the secret key bytes
+        const { type, data: secretKey } = nip19.decode(currentNsec);
+        if (type !== 'nsec') {
+          throw new Error('Invalid nsec format');
+        }
+
+        // Encrypt with NIP-49 (logN=16 for good security)
+        const ncryptsec = nip49Encrypt(secretKey, password, 16, 0x00);
+
+        // Create backup file content
+        const backupContent = [
+          '# OtherStuff Nostr Key Backup',
+          '# Created: ' + new Date().toISOString(),
+          '# Public Key: ' + npub,
+          '#',
+          '# This file contains your encrypted private key (ncryptsec).',
+          '# You will need your password to decrypt it.',
+          '#',
+          ncryptsec
+        ].join('\\n');
+
+        // Download file
+        const blob = new Blob([backupContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'OtherStuff_Encrypted_Key_Backup.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Reset form
+        exportPasswordForm.hidden = true;
+        exportPasswordInput.value = '';
+      } catch (err) {
+        console.error('Failed to create backup:', err);
+        exportKeyError.textContent = 'Failed to create encrypted backup';
+        exportKeyError.hidden = false;
+      }
     });
 
     // === Admin Functions ===
