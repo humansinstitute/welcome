@@ -51,14 +51,19 @@ export function renderAppsPage(): string {
       background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
-      padding: 1.5rem;
+      margin: 0;
+      padding: 0;
       touch-action: manipulation;
       transition: background-image 0.3s ease;
     }
 
     .container {
-      max-width: 560px;
+      max-width: 600px;
       margin: 0 auto;
+      background: var(--surface);
+      min-height: 100vh;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
     }
 
     /* Header */
