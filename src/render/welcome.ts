@@ -535,6 +535,80 @@ export function renderWelcomePage(): string {
     import { generateSecretKey, getPublicKey, nip19 } from 'https://esm.sh/nostr-tools@2.7.2';
     import { encrypt as nip49Encrypt, decrypt as nip49Decrypt } from 'https://esm.sh/nostr-tools@2.7.2/nip49';
     import { Relay } from 'https://esm.sh/nostr-tools@2.7.2/relay';
+    import Dexie from 'https://esm.sh/dexie@4.0.4';
+
+    // Initialize Dexie database for encrypted secrets
+    const db = new Dexie('OtherStuffDB');
+    db.version(2).stores({
+      profiles: 'npub, name, about, picture, nip05, updatedAt',
+      secrets: 'npub'
+    });
+
+    // ============================================
+    // Web Crypto helpers for encrypted key storage
+    // ============================================
+
+    async function deriveKeyFromPassword(password, salt) {
+      const encoder = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+      );
+      return crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: salt,
+          iterations: 100000,
+          hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    async function exportKey(key) {
+      const exported = await crypto.subtle.exportKey('raw', key);
+      return new Uint8Array(exported);
+    }
+
+    async function encryptSecret(plaintext, key) {
+      const encoder = new TextEncoder();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        encoder.encode(plaintext)
+      );
+      return {
+        ciphertext: new Uint8Array(encrypted),
+        iv: iv
+      };
+    }
+
+    async function storeEncryptedNsec(npub, nsec, password) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKeyFromPassword(password, salt);
+      const { ciphertext, iv } = await encryptSecret(nsec, key);
+      const exportedKey = await exportKey(key);
+
+      await db.secrets.put({
+        npub,
+        ciphertext: Array.from(ciphertext),
+        iv: Array.from(iv),
+        salt: Array.from(salt)
+      });
+
+      // Store derived key in sessionStorage for this session only
+      sessionStorage.setItem('derivedKey', JSON.stringify(Array.from(exportedKey)));
+      return true;
+    }
+
+    // ============================================
 
     const RELAYS = ${JSON.stringify(NOSTR_RELAYS)};
 
@@ -761,9 +835,9 @@ export function renderWelcomePage(): string {
           return;
         }
 
-        // Store key in sessionStorage for this session
+        // Store npub in sessionStorage, encrypt nsec in Dexie
         sessionStorage.setItem('npub', npub);
-        sessionStorage.setItem('nsec', nsec);
+        await storeEncryptedNsec(npub, nsec, password);
 
         // Redirect to onboarding
         window.location.href = '/onboarding';
@@ -820,10 +894,10 @@ export function renderWelcomePage(): string {
         // Clear any stale session data first
         sessionStorage.clear();
 
-        // Store in session (existing users are already onboarded)
+        // Store npub in session, encrypt nsec in Dexie (existing users are already onboarded)
         sessionStorage.setItem('npub', data.npub);
-        sessionStorage.setItem('nsec', nsec);
         sessionStorage.setItem('onboarded', 'true');
+        await storeEncryptedNsec(data.npub, nsec, password);
 
         // Fetch and cache profile avatar before redirect
         loginSubmit.textContent = 'Loading profile...';
@@ -923,7 +997,8 @@ export function renderWelcomePage(): string {
         // Clear any stale session data first
         sessionStorage.clear();
 
-        // Store in session and redirect (nsec users already onboarded)
+        // TODO: Prompt for password to encrypt nsec in Dexie
+        // For now, raw nsec users store in sessionStorage (less secure but functional)
         sessionStorage.setItem('npub', npub);
         sessionStorage.setItem('nsec', secret);
         sessionStorage.setItem('onboarded', 'true');
