@@ -466,6 +466,12 @@ export function renderWelcomePage(): string {
             placeholder="nsec1…"
             autocomplete="off"
           >
+          <input
+            type="password"
+            name="encryptPassword"
+            placeholder="Password to encrypt key"
+            autocomplete="new-password"
+          >
           <button class="btn btn-secondary" type="submit">Sign in with secret</button>
         </form>
       </div>
@@ -979,8 +985,15 @@ export function renderWelcomePage(): string {
       e.preventDefault();
 
       const secret = secretForm.elements.secret.value.trim();
+      const encryptPassword = secretForm.elements.encryptPassword.value;
+
       if (!secret || !secret.startsWith('nsec1')) {
         showError('Enter a valid nsec key.');
+        return;
+      }
+
+      if (!encryptPassword) {
+        showError('Enter a password to encrypt your key.');
         return;
       }
 
@@ -997,11 +1010,10 @@ export function renderWelcomePage(): string {
         // Clear any stale session data first
         sessionStorage.clear();
 
-        // TODO: Prompt for password to encrypt nsec in Dexie
-        // For now, raw nsec users store in sessionStorage (less secure but functional)
+        // Store npub in session, encrypt nsec in Dexie
         sessionStorage.setItem('npub', npub);
-        sessionStorage.setItem('nsec', secret);
         sessionStorage.setItem('onboarded', 'true');
+        await storeEncryptedNsec(npub, secret, encryptPassword);
 
         // Fetch and cache profile avatar
         await fetchAndCacheProfile(npub);
