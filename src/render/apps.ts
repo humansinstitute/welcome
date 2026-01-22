@@ -1137,9 +1137,10 @@ export function renderAppsPage(): string {
 
     // Initialize Dexie database for profile and secrets
     const db = new Dexie('OtherStuffDB');
-    db.version(2).stores({
+    db.version(3).stores({
       profiles: 'npub, name, about, picture, nip05, updatedAt',
-      secrets: 'npub'  // Stores encrypted nsec with salt and iv
+      secrets: 'npub',  // Stores encrypted nsec with salt and iv
+      assets: 'url'     // Cached images/assets as blobs
     });
 
     // ============================================

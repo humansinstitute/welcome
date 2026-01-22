@@ -430,9 +430,10 @@ export function renderOnboardingPage(): string {
 
     // Initialize Dexie database
     const db = new Dexie('OtherStuffDB');
-    db.version(2).stores({
+    db.version(3).stores({
       profiles: 'npub, name, about, picture, nip05, updatedAt',
-      secrets: 'npub'
+      secrets: 'npub',
+      assets: 'url'  // Cached images/assets as blobs
     });
 
     // Import key from stored format

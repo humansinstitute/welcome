@@ -49,7 +49,6 @@ export function renderWelcomePage(): string {
     body {
       font-family: var(--font-body);
       background: var(--bg);
-      background-image: url('/bg.jpg');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
@@ -60,6 +59,7 @@ export function renderWelcomePage(): string {
       justify-content: center;
       padding: 1.5rem;
       touch-action: manipulation;
+      transition: background-image 0.3s ease;
     }
 
     .card {
@@ -543,12 +543,45 @@ export function renderWelcomePage(): string {
     import { Relay } from 'https://esm.sh/nostr-tools@2.7.2/relay';
     import Dexie from 'https://esm.sh/dexie@4.0.4';
 
-    // Initialize Dexie database for encrypted secrets
+    // Initialize Dexie database for encrypted secrets and cached assets
     const db = new Dexie('OtherStuffDB');
-    db.version(2).stores({
+    db.version(3).stores({
       profiles: 'npub, name, about, picture, nip05, updatedAt',
-      secrets: 'npub'
+      secrets: 'npub',
+      assets: 'url'  // Cached images/assets as blobs
     });
+
+    // ============================================
+    // Background image caching
+    // ============================================
+
+    async function loadCachedBackground() {
+      const BG_URL = '/bg.jpg';
+      try {
+        // Check cache first
+        const cached = await db.assets.get(BG_URL);
+        if (cached && cached.blob) {
+          const objectUrl = URL.createObjectURL(cached.blob);
+          document.body.style.backgroundImage = 'url(' + objectUrl + ')';
+          return;
+        }
+
+        // Fetch and cache
+        const response = await fetch(BG_URL);
+        if (response.ok) {
+          const blob = await response.blob();
+          await db.assets.put({ url: BG_URL, blob, cachedAt: Date.now() });
+          const objectUrl = URL.createObjectURL(blob);
+          document.body.style.backgroundImage = 'url(' + objectUrl + ')';
+        }
+      } catch (err) {
+        // Fallback to direct URL if caching fails
+        document.body.style.backgroundImage = 'url(/bg.jpg)';
+      }
+    }
+
+    // Load background immediately
+    loadCachedBackground();
 
     // ============================================
     // Web Crypto helpers for encrypted key storage
