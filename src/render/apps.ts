@@ -1328,13 +1328,24 @@ export function renderAppsPage(): string {
 
     // Get session data
     const npub = sessionStorage.getItem('npub');
-    const nsec = sessionStorage.getItem('nsec');
+    let nsec = sessionStorage.getItem('nsec');  // May be null if using encrypted storage
     const onboarded = sessionStorage.getItem('onboarded');
     const cachedAvatar = sessionStorage.getItem('avatarUrl');
     const cachedName = sessionStorage.getItem('displayName');
 
     // Current profile data
     let currentProfile = { name: '', about: '', picture: '', nip05: '' };
+
+    // Load nsec from encrypted Dexie storage if available
+    async function initializeNsec() {
+      if (nsec) return;  // Already have nsec from sessionStorage (raw nsec login)
+      if (!npub) return;
+
+      const decrypted = await loadDecryptedNsec(npub);
+      if (decrypted) {
+        nsec = decrypted;
+      }
+    }
 
     // Update header avatar with image or fallback
     function updateHeaderAvatar(pictureUrl, name) {
@@ -1395,8 +1406,11 @@ export function renderAppsPage(): string {
     } else if (!onboarded) {
       window.location.href = '/onboarding';
     } else {
-      // Initialize with Dexie cached profile or sessionStorage fallback
+      // Initialize with Dexie cached profile and encrypted nsec
       (async () => {
+        // Load encrypted nsec from Dexie
+        await initializeNsec();
+
         let displayName = cachedName;
         let avatarUrl = cachedAvatar;
 
@@ -1929,11 +1943,10 @@ export function renderAppsPage(): string {
       // Npub
       profileNpubDisplay.textContent = npub;
 
-      // Export key section - only show if user has nsec
-      const currentNsec = sessionStorage.getItem('nsec');
-      if (currentNsec) {
+      // Export key section - only show if user has nsec (loaded from Dexie or sessionStorage)
+      if (nsec) {
         exportKeySection.classList.remove('hidden');
-        exportKeyInput.value = currentNsec;
+        exportKeyInput.value = nsec;
         exportKeyInput.type = 'password';
         exportKeyToggle.textContent = '👁';
         exportPasswordForm.hidden = true;
@@ -2080,13 +2093,12 @@ export function renderAppsPage(): string {
       if (!confirmed) return;
 
       try {
-        const keyToCopy = sessionStorage.getItem('nsec');
-        if (!keyToCopy) {
+        if (!nsec) {
           exportKeyError.textContent = 'No key available to copy';
           exportKeyError.hidden = false;
           return;
         }
-        await navigator.clipboard.writeText(keyToCopy);
+        await navigator.clipboard.writeText(nsec);
         exportKeyCopy.textContent = 'Copied!';
         setTimeout(() => {
           exportKeyCopy.textContent = 'Copy';
@@ -2124,14 +2136,13 @@ export function renderAppsPage(): string {
       }
 
       try {
-        // Get nsec from sessionStorage
-        const currentNsec = sessionStorage.getItem('nsec');
-        if (!currentNsec) {
+        // Use nsec loaded from Dexie or sessionStorage
+        if (!nsec) {
           throw new Error('No key available');
         }
 
         // Decode nsec to get the secret key bytes
-        const { type, data: secretKey } = nip19.decode(currentNsec);
+        const { type, data: secretKey } = nip19.decode(nsec);
         if (type !== 'nsec') {
           throw new Error('Invalid nsec format');
         }
