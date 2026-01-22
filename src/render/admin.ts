@@ -46,10 +46,14 @@ export function renderAdminPage(): string {
     body {
       font-family: var(--font-body);
       background: var(--bg);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
       padding: 1.5rem;
       touch-action: manipulation;
+      transition: background-image 0.3s ease;
     }
 
     .container {
@@ -964,6 +968,40 @@ export function renderAdminPage(): string {
   </div>
 
   <script type="module">
+    import Dexie from 'https://esm.sh/dexie@4.0.4';
+
+    // Initialize Dexie for asset caching
+    const db = new Dexie('OtherStuffDB');
+    db.version(3).stores({
+      profiles: 'npub, name, about, picture, nip05, updatedAt',
+      secrets: 'npub',
+      assets: 'url'
+    });
+
+    // Load cached background
+    async function loadCachedBackground() {
+      const BG_URL = '/bg.jpg';
+      try {
+        const cached = await db.assets.get(BG_URL);
+        if (cached && cached.blob) {
+          const objectUrl = URL.createObjectURL(cached.blob);
+          document.body.style.backgroundImage = 'url(' + objectUrl + ')';
+          return;
+        }
+        const response = await fetch(BG_URL);
+        if (response.ok) {
+          const blob = await response.blob();
+          await db.assets.put({ url: BG_URL, blob, cachedAt: Date.now() });
+          const objectUrl = URL.createObjectURL(blob);
+          document.body.style.backgroundImage = 'url(' + objectUrl + ')';
+        }
+      } catch (err) {
+        document.body.style.backgroundImage = 'url(/bg.jpg)';
+      }
+    }
+
+    loadCachedBackground();
+
     const ADMIN_NPUB = ${JSON.stringify(ADMIN_NPUB)};
 
     // Get session data

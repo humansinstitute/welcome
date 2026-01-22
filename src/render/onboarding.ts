@@ -47,10 +47,14 @@ export function renderOnboardingPage(): string {
     body {
       font-family: var(--font-body);
       background: var(--bg);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
       padding: 2rem 1.5rem;
       touch-action: manipulation;
+      transition: background-image 0.3s ease;
     }
 
     .container {
@@ -435,6 +439,33 @@ export function renderOnboardingPage(): string {
       secrets: 'npub',
       assets: 'url'  // Cached images/assets as blobs
     });
+
+    // ============================================
+    // Background image caching
+    // ============================================
+
+    async function loadCachedBackground() {
+      const BG_URL = '/bg.jpg';
+      try {
+        const cached = await db.assets.get(BG_URL);
+        if (cached && cached.blob) {
+          const objectUrl = URL.createObjectURL(cached.blob);
+          document.body.style.backgroundImage = 'url(' + objectUrl + ')';
+          return;
+        }
+        const response = await fetch(BG_URL);
+        if (response.ok) {
+          const blob = await response.blob();
+          await db.assets.put({ url: BG_URL, blob, cachedAt: Date.now() });
+          const objectUrl = URL.createObjectURL(blob);
+          document.body.style.backgroundImage = 'url(' + objectUrl + ')';
+        }
+      } catch (err) {
+        document.body.style.backgroundImage = 'url(/bg.jpg)';
+      }
+    }
+
+    loadCachedBackground();
 
     // Import key from stored format
     async function importKey(keyData) {
