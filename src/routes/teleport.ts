@@ -76,7 +76,7 @@ export async function handleGetPublicApps(req: Request): Promise<Response> {
 export async function handleStoreTeleportKey(req: Request): Promise<Response> {
   try {
     const body = await req.json();
-    const { hashId, encryptedNsec, npub, appId, baseUrl } = body;
+    const { hashId, encryptedNsec, npub, appId, appPubkey, baseUrl } = body;
 
     if (!hashId || typeof hashId !== "string") {
       return Response.json(
@@ -99,27 +99,37 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
       );
     }
 
-    if (!appId || typeof appId !== "number") {
-      return Response.json(
-        { success: false, error: "appId is required" },
-        { status: 400 }
-      );
-    }
+    // Determine app pubkey - either from appId lookup or directly from appPubkey
+    let appPubkeyHex: string | null = null;
 
-    // Get the app to find its teleport pubkey
-    const app = getAppById(appId);
-    if (!app || !app.teleport_pubkey) {
+    if (appPubkey && typeof appPubkey === "string") {
+      // Direct pubkey provided (for user teleport apps)
+      appPubkeyHex = decodeTeleportPubkey(appPubkey);
+      if (!appPubkeyHex) {
+        return Response.json(
+          { success: false, error: "Invalid appPubkey format" },
+          { status: 400 }
+        );
+      }
+    } else if (appId && typeof appId === "number") {
+      // Lookup from apps table (for admin-managed apps)
+      const app = getAppById(appId);
+      if (!app || !app.teleport_pubkey) {
+        return Response.json(
+          { success: false, error: "App not found or teleport not configured" },
+          { status: 400 }
+        );
+      }
+      appPubkeyHex = decodeTeleportPubkey(app.teleport_pubkey);
+      if (!appPubkeyHex) {
+        return Response.json(
+          { success: false, error: "Invalid app teleport pubkey" },
+          { status: 400 }
+        );
+      }
+    } else {
       return Response.json(
-        { success: false, error: "App not found or teleport not configured" },
-        { status: 400 }
-      );
-    }
-
-    // Decode the app's teleport pubkey
-    const appPubkeyHex = decodeTeleportPubkey(app.teleport_pubkey);
-    if (!appPubkeyHex) {
-      return Response.json(
-        { success: false, error: "Invalid app teleport pubkey" },
+        { success: false, error: "Either appId or appPubkey is required" },
         { status: 400 }
       );
     }

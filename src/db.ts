@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 
 import { DB_PATH, DEFAULT_INVITE_CODES, TELEPORT_EXPIRY_SECONDS } from "./config.ts";
-import type { User, App, UserApp, OnboardingStatus, InviteCode, TeleportKey, Group, UserGroup, InviteCodeGroup, AppGroup, UserGroupInfo, InviteCodeAppCode } from "./types.ts";
+import type { User, App, UserApp, OnboardingStatus, InviteCode, TeleportKey, Group, UserGroup, InviteCodeGroup, AppGroup, UserGroupInfo, InviteCodeAppCode, UserTeleportApp } from "./types.ts";
 
 const db = new Database(DB_PATH);
 
@@ -183,6 +183,22 @@ db.run(`
   )
 `);
 
+// User teleport apps table (user-added key teleport destinations)
+db.run(`
+  CREATE TABLE IF NOT EXISTS user_teleport_apps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_npub TEXT NOT NULL,
+    app_pubkey TEXT NOT NULL,
+    app_url TEXT NOT NULL,
+    app_name TEXT NOT NULL,
+    app_description TEXT DEFAULT NULL,
+    metadata TEXT NOT NULL DEFAULT '{}',
+    shared INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_npub, app_pubkey)
+  )
+`);
+
 // Create indexes for efficient lookups
 db.run("CREATE INDEX IF NOT EXISTS idx_user_groups_user ON user_groups(user_id)");
 db.run("CREATE INDEX IF NOT EXISTS idx_user_groups_group ON user_groups(group_id)");
@@ -191,6 +207,7 @@ db.run("CREATE INDEX IF NOT EXISTS idx_app_groups_group ON app_groups(group_id)"
 db.run("CREATE INDEX IF NOT EXISTS idx_invite_code_groups_code ON invite_code_groups(invite_code_id)");
 db.run("CREATE INDEX IF NOT EXISTS idx_invite_code_app_codes_code ON invite_code_app_codes(invite_code_id)");
 db.run("CREATE INDEX IF NOT EXISTS idx_invite_code_app_codes_app ON invite_code_app_codes(app_id)");
+db.run("CREATE INDEX IF NOT EXISTS idx_user_teleport_apps_npub ON user_teleport_apps(user_npub)");
 
 // Seed default invite codes if table is empty
 const codeCount = db.query<{ count: number }, []>("SELECT COUNT(*) as count FROM invite_codes").get();
@@ -1005,4 +1022,68 @@ export function clearInviteCodeAppCodes(inviteCodeId: number): boolean {
 
 export function getAppsWithTeleport(): App[] {
   return getAppsWithTeleportStmt.all();
+}
+
+// ============================================
+// User Teleport Apps Functions
+// (User-added key teleport destinations)
+// ============================================
+
+const getUserTeleportAppsStmt = db.query<UserTeleportApp, [string]>(
+  `SELECT * FROM user_teleport_apps WHERE user_npub = ? ORDER BY created_at DESC`
+);
+
+const getUserTeleportAppByPubkeyStmt = db.query<UserTeleportApp, [string, string]>(
+  `SELECT * FROM user_teleport_apps WHERE user_npub = ? AND app_pubkey = ?`
+);
+
+const createUserTeleportAppStmt = db.query<UserTeleportApp, [string, string, string, string, string | null, string]>(
+  `INSERT INTO user_teleport_apps (user_npub, app_pubkey, app_url, app_name, app_description, metadata)
+   VALUES (?, ?, ?, ?, ?, ?) RETURNING *`
+);
+
+const deleteUserTeleportAppStmt = db.prepare(
+  `DELETE FROM user_teleport_apps WHERE id = ? AND user_npub = ?`
+);
+
+export function getUserTeleportApps(npub: string): UserTeleportApp[] {
+  if (!npub) return [];
+  return getUserTeleportAppsStmt.all(npub);
+}
+
+export function getUserTeleportAppByPubkey(npub: string, appPubkey: string): UserTeleportApp | null {
+  if (!npub || !appPubkey) return null;
+  const app = getUserTeleportAppByPubkeyStmt.get(npub, appPubkey) as UserTeleportApp | undefined;
+  return app ?? null;
+}
+
+export function createUserTeleportApp(
+  npub: string,
+  appPubkey: string,
+  appUrl: string,
+  appName: string,
+  appDescription: string | null,
+  metadata: string = "{}"
+): UserTeleportApp | null {
+  if (!npub || !appPubkey || !appUrl || !appName) return null;
+  try {
+    const app = createUserTeleportAppStmt.get(
+      npub,
+      appPubkey,
+      appUrl,
+      appName,
+      appDescription,
+      metadata
+    ) as UserTeleportApp | undefined;
+    return app ?? null;
+  } catch (err) {
+    console.error("[DB] createUserTeleportApp error:", err);
+    return null;
+  }
+}
+
+export function deleteUserTeleportApp(id: number, npub: string): boolean {
+  if (!id || !npub) return false;
+  const result = deleteUserTeleportAppStmt.run(id, npub);
+  return result.changes > 0;
 }

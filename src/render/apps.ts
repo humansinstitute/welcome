@@ -1001,6 +1001,69 @@ export function renderAppsPage(): string {
       border-color: var(--purple);
       color: var(--purple);
     }
+
+    /* Add your own apps link */
+    .add-apps-link {
+      text-align: center;
+      margin-top: 1rem;
+      padding: 0.75rem;
+    }
+
+    .add-apps-link a {
+      color: var(--purple);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    .add-apps-link a:hover {
+      color: var(--purple-light);
+    }
+
+    /* User app item with delete button */
+    .user-app-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--surface-warm);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md);
+      transition: all 0.2s;
+    }
+
+    .user-app-item:hover {
+      border-color: var(--purple);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .user-app-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .user-app-delete {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.75rem;
+      font-family: var(--font-body);
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .user-app-delete:hover {
+      border-color: var(--error);
+      color: var(--error);
+      background: #fef2f2;
+    }
   </style>
 </head>
 <body>
@@ -1054,6 +1117,17 @@ export function renderAppsPage(): string {
           <p>No apps available yet.</p>
         </div>
       </div>
+    </div>
+
+    <!-- User's Custom Teleport Apps -->
+    <div class="card" id="user-apps-card" hidden>
+      <h2>Your Custom Apps</h2>
+      <div class="apps-list" id="user-apps-list"></div>
+    </div>
+
+    <!-- Add your own apps link -->
+    <div class="add-apps-link">
+      <a href="/teleport/setup">[ Add your own apps ]</a>
     </div>
 
 
@@ -1620,17 +1694,27 @@ export function renderAppsPage(): string {
         // Get base URL for the API route
         const baseUrl = window.location.origin;
 
+        // Build request body - use appPubkey for user apps, appId for admin apps
+        const requestBody = {
+          hashId,
+          encryptedNsec,
+          npub,  // User's public key - needed by remote app for decryption
+          baseUrl
+        };
+
+        if (teleportTarget.isUserApp) {
+          // User teleport app - send pubkey directly
+          requestBody.appPubkey = teleportTarget.teleport_pubkey;
+        } else {
+          // Admin-managed app - send app ID for lookup
+          requestBody.appId = teleportTarget.id;
+        }
+
         // Store on server and get the NIP-44 encrypted blob
         const res = await fetch('/api/teleport', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            hashId,
-            encryptedNsec,
-            npub,  // User's public key - needed by remote app for decryption
-            appId: teleportTarget.id,
-            baseUrl
-          })
+          body: JSON.stringify(requestBody)
         });
 
         const data = await res.json();
@@ -1641,10 +1725,12 @@ export function renderAppsPage(): string {
         // Build teleport URL with NIP-44 encrypted blob and invite code if available
         let teleportUrl = teleportTarget.url + (teleportTarget.url.includes('?') ? '&' : '?') + 'keyteleport=' + encodeURIComponent(data.blob);
 
-        // Add invite code if one exists for this app
-        const inviteCode = userInviteCodes[teleportTarget.id];
-        if (inviteCode) {
-          teleportUrl += '&ic=' + encodeURIComponent(inviteCode);
+        // Add invite code if one exists for this app (only for admin apps)
+        if (!teleportTarget.isUserApp) {
+          const inviteCode = userInviteCodes[teleportTarget.id];
+          if (inviteCode) {
+            teleportUrl += '&ic=' + encodeURIComponent(inviteCode);
+          }
         }
 
         // Copy throwaway nsec to clipboard (the unlock code)
@@ -1880,6 +1966,124 @@ export function renderAppsPage(): string {
 
     // Load user apps on page load
     loadUserApps();
+
+    // === User Teleport Apps Functions ===
+
+    const userAppsCard = document.getElementById('user-apps-card');
+    const userAppsList = document.getElementById('user-apps-list');
+    let userTeleportApps = [];
+
+    async function loadUserTeleportApps() {
+      try {
+        const res = await fetch('/api/user/teleport-apps', {
+          headers: { 'X-Npub': npub }
+        });
+        const data = await res.json();
+
+        if (!data.success || !data.apps || data.apps.length === 0) {
+          userAppsCard.hidden = true;
+          return;
+        }
+
+        userTeleportApps = data.apps;
+        renderUserTeleportApps();
+        userAppsCard.hidden = false;
+      } catch (err) {
+        console.error('Failed to load user teleport apps:', err);
+        userAppsCard.hidden = true;
+      }
+    }
+
+    function renderUserTeleportApps() {
+      if (userTeleportApps.length === 0) {
+        userAppsCard.hidden = true;
+        return;
+      }
+
+      userAppsList.innerHTML = userTeleportApps.map(app => {
+        const firstLetter = app.app_name.charAt(0).toUpperCase();
+        return '<div class="user-app-item" data-app-id="' + app.id + '">' +
+          '<div class="user-app-content" data-pubkey="' + app.app_pubkey + '" data-url="' + escapeHtml(app.app_url) + '" data-name="' + escapeHtml(app.app_name) + '">' +
+            '<div class="app-icon" style="background:var(--purple);color:white;">' + firstLetter + '</div>' +
+            '<div class="app-info">' +
+              '<div class="app-name">' + escapeHtml(app.app_name) + '</div>' +
+              '<div class="app-role">' + (app.app_description || 'Custom App') + '</div>' +
+            '</div>' +
+            '<span class="app-arrow">&rarr;</span>' +
+          '</div>' +
+          '<button class="user-app-delete" data-app-id="' + app.id + '" title="Remove app">X</button>' +
+        '</div>';
+      }).join('');
+
+      // Add click handlers for teleport
+      userAppsList.querySelectorAll('.user-app-content').forEach(item => {
+        item.addEventListener('click', () => {
+          const pubkey = item.dataset.pubkey;
+          const url = item.dataset.url;
+          const name = item.dataset.name;
+          const app = userTeleportApps.find(a => a.app_pubkey === pubkey);
+          if (!app) return;
+
+          if (nsec) {
+            // Show teleport modal for user app
+            showUserAppTeleportModal(app);
+          } else {
+            // Direct navigation
+            window.open(url, '_blank');
+          }
+        });
+      });
+
+      // Add delete handlers
+      userAppsList.querySelectorAll('.user-app-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const appId = parseInt(btn.dataset.appId, 10);
+          const app = userTeleportApps.find(a => a.id === appId);
+          if (!app) return;
+
+          if (!confirm('Remove "' + app.app_name + '" from your apps?')) return;
+
+          try {
+            const res = await fetch('/api/user/teleport-apps/' + appId, {
+              method: 'DELETE',
+              headers: { 'X-Npub': npub }
+            });
+            const data = await res.json();
+
+            if (data.success) {
+              userTeleportApps = userTeleportApps.filter(a => a.id !== appId);
+              renderUserTeleportApps();
+            } else {
+              alert('Failed to remove app: ' + (data.error || 'Unknown error'));
+            }
+          } catch (err) {
+            console.error('Failed to delete user app:', err);
+            alert('Failed to remove app');
+          }
+        });
+      });
+    }
+
+    // Teleport to user app
+    function showUserAppTeleportModal(app) {
+      // Reuse the existing teleport modal
+      teleportTarget = {
+        id: app.id,
+        name: app.app_name,
+        url: app.app_url,
+        teleport_pubkey: app.app_pubkey, // Already hex
+        isUserApp: true
+      };
+      teleportAppName.textContent = app.app_name;
+      hideTeleportError();
+      teleportCopyOpenBtn.disabled = false;
+      teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
+      teleportModal.hidden = false;
+    }
+
+    // Load user teleport apps on page load
+    loadUserTeleportApps();
 
     // === Profile Modal Functions ===
 

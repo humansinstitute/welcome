@@ -4,6 +4,7 @@ import { renderWelcomePage } from "./render/welcome.ts";
 import { renderAppsPage } from "./render/apps.ts";
 import { renderOnboardingPage } from "./render/onboarding.ts";
 import { renderAdminPage } from "./render/admin.ts";
+import { renderTeleportSetupPage } from "./render/teleport-setup.ts";
 import { handleSignup, handleRecover, handleExtensionLogin } from "./routes/auth.ts";
 import {
   handleGetInviteCodes,
@@ -41,6 +42,13 @@ import {
   handleGetTeleportKey,
   handleGetPublicApps,
 } from "./routes/teleport.ts";
+import {
+  handleVerifyAppBlob,
+  handleAddUserTeleportApp,
+  handleGetUserTeleportApps,
+  handleDeleteUserTeleportApp,
+  handleGetWelcomePubkey,
+} from "./routes/teleport-setup.ts";
 import {
   handleGetWelcome,
   handleDismissWelcome,
@@ -87,6 +95,13 @@ const server = Bun.serve({
     // Admin page
     if (path === "/admin" && method === "GET") {
       return new Response(renderAdminPage(), {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
+    // Teleport setup wizard
+    if (path === "/teleport/setup" && method === "GET") {
+      return new Response(renderTeleportSetupPage(), {
         headers: { "Content-Type": "text/html" },
       });
     }
@@ -305,6 +320,30 @@ const server = Bun.serve({
       const hashId = path.split("/api/keys/")[1];
       if (hashId) {
         return handleGetTeleportKey(hashId);
+      }
+    }
+
+    // Teleport setup routes (user-added apps)
+    if (path === "/api/teleport/welcome-pubkey" && method === "GET") {
+      return handleGetWelcomePubkey();
+    }
+
+    if (path === "/api/teleport/verify-app" && method === "POST") {
+      return handleVerifyAppBlob(req);
+    }
+
+    if (path === "/api/teleport/add-app" && method === "POST") {
+      return handleAddUserTeleportApp(req);
+    }
+
+    if (path === "/api/user/teleport-apps" && method === "GET") {
+      return handleGetUserTeleportApps(req);
+    }
+
+    if (path.startsWith("/api/user/teleport-apps/") && method === "DELETE") {
+      const id = parseInt(path.split("/api/user/teleport-apps/")[1], 10);
+      if (!isNaN(id)) {
+        return handleDeleteUserTeleportApp(req, id);
       }
     }
 

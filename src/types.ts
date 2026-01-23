@@ -112,3 +112,17 @@ export type InviteCodeAppCode = {
   external_code: string; // The app's invite code (e.g., MG's "XXXX-XXXX-XXXX")
   created_at: string;
 };
+
+// User-added teleport app (custom key teleport destination)
+// Created when user pastes a verified app registration blob
+export type UserTeleportApp = {
+  id: number;
+  user_npub: string;
+  app_pubkey: string; // Hex pubkey of the remote app
+  app_url: string;
+  app_name: string;
+  app_description: string | null;
+  metadata: string; // JSON string for extensibility
+  shared: number; // SQLite boolean (0 or 1) - future: whether visible to others
+  created_at: string;
+};
