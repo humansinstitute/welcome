@@ -154,14 +154,12 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
       );
     }
 
-    // Create the payload for the receiving app
-    // Include npub so the remote app can derive the conversation key for decryption
-    const apiRoute = `${baseUrl || ""}/api/keys`;
+    // Create the payload for the receiving app (self-contained - no callback needed)
+    // encryptedNsec is already encrypted by browser with user's key + throwaway pubkey
     const payload = {
-      apiRoute,
-      hash_id: hashId,
-      npub,  // User's public key - needed by remote app for NIP-44 decryption
-      timestamp: expiresAt
+      encryptedNsec,  // Inner-encrypted nsec (browser did: NIP-44(nsec, userKey + throwawayPubkey))
+      npub,           // User's public key - needed for inner decryption
+      v: 1            // Protocol version
     };
 
     // Create and sign a Nostr event with the payload

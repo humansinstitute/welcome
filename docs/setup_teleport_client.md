@@ -70,14 +70,15 @@ Before users can teleport to your app, they must register it in their sender app
 ### Registration Flow
 
 1. User goes to your app's "Setup Key Teleport" page
-2. User pastes the sender's public key (npub)
-3. Your app generates a registration blob
-4. User copies blob and pastes into sender app
+2. User clicks "Copy Blob" button (one-click - no input needed)
+3. User pastes blob into sender app (e.g., Welcome)
 
 ### Generating Registration Blob
 
+Registration uses **plaintext content** - no encryption needed since the info is public.
+
 ```typescript
-import { nip19, nip44, finalizeEvent, getPublicKey } from "nostr-tools";
+import { finalizeEvent } from "nostr-tools";
 
 const KEYTELEPORT_KIND = 30078;
 
@@ -89,14 +90,10 @@ interface AppRegistration {
 }
 
 function generateRegistrationBlob(
-  senderNpub: string,        // Sender's public key (e.g., Welcome's npub)
   appSecretKey: Uint8Array,  // Your app's secret key
   registration: AppRegistration
 ): string {
-  // 1. Decode sender's npub
-  const { data: senderPubkeyHex } = nip19.decode(senderNpub);
-
-  // 2. Create registration content
+  // 1. Create registration content (plaintext - no encryption needed)
   const content = {
     url: registration.url,
     name: registration.name,
@@ -104,78 +101,63 @@ function generateRegistrationBlob(
     metadata: registration.metadata || {},
   };
 
-  // 3. Encrypt to sender's pubkey
-  const conversationKey = nip44.v2.utils.getConversationKey(
-    appSecretKey,
-    senderPubkeyHex as string
-  );
-  const encryptedContent = nip44.v2.encrypt(JSON.stringify(content), conversationKey);
-
-  // 4. Create and sign event
+  // 2. Create and sign event (signature proves app identity)
   const event = finalizeEvent({
     kind: KEYTELEPORT_KIND,
     created_at: Math.floor(Date.now() / 1000),
     tags: [
-      ["p", senderPubkeyHex as string],
       ["type", "keyteleport-app-registration"],
     ],
-    content: encryptedContent,
+    content: JSON.stringify(content),  // Plaintext JSON
   }, appSecretKey);
 
-  // 5. Base64 encode
+  // 3. Base64 encode
   return btoa(JSON.stringify(event));
 }
 ```
 
+**One-click registration:** No sender npub needed. Just generate blob + copy to clipboard.
+
 ### Registration UI Example
+
+One-click registration - no input required:
 
 ```html
 <h2>Setup Key Teleport</h2>
 
 <div class="step">
-  <h3>Step 1: Enter Sender's Public Key</h3>
-  <input type="text" id="sender-npub" placeholder="npub1..." />
+  <h3>Step 1: Copy Registration Blob</h3>
+  <button id="copy-blob-btn">Copy Blob to Clipboard</button>
+  <p id="status" hidden></p>
 </div>
 
 <div class="step">
-  <h3>Step 2: Copy Registration Blob</h3>
-  <button id="generate-btn">Generate Blob</button>
-  <textarea id="blob-output" readonly hidden></textarea>
-  <button id="copy-btn" hidden>Copy to Clipboard</button>
-</div>
-
-<div class="step">
-  <h3>Step 3: Complete Setup</h3>
+  <h3>Step 2: Complete Setup</h3>
   <p>Paste the blob into your sender app (e.g., Welcome) to complete registration.</p>
 </div>
 
 <script type="module">
-  import { nip19, nip44, finalizeEvent } from "nostr-tools";
+  import { finalizeEvent } from "nostr-tools";
 
   // Your app's keypair (loaded from secure storage)
   const APP_SECRET_KEY = /* load from env/secure storage */;
 
-  document.getElementById("generate-btn").onclick = () => {
-    const senderNpub = document.getElementById("sender-npub").value.trim();
-
+  document.getElementById("copy-blob-btn").onclick = async () => {
     try {
-      const blob = generateRegistrationBlob(senderNpub, APP_SECRET_KEY, {
+      const blob = generateRegistrationBlob(APP_SECRET_KEY, {
         url: "https://yourapp.com",  // or "yourapp://auth"
         name: "Your App Name",
         description: "What your app does",
       });
 
-      document.getElementById("blob-output").value = blob;
-      document.getElementById("blob-output").hidden = false;
-      document.getElementById("copy-btn").hidden = false;
+      await navigator.clipboard.writeText(blob);
+
+      const status = document.getElementById("status");
+      status.textContent = "Blob copied! Paste into Welcome.";
+      status.hidden = false;
     } catch (err) {
       alert("Error: " + err.message);
     }
-  };
-
-  document.getElementById("copy-btn").onclick = async () => {
-    await navigator.clipboard.writeText(document.getElementById("blob-output").value);
-    document.getElementById("copy-btn").textContent = "Copied!";
   };
 </script>
 ```
