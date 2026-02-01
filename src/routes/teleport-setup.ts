@@ -85,15 +85,6 @@ export async function handleVerifyAppBlob(req: Request): Promise<Response> {
       );
     }
 
-    // Get Welcome's secret key for decryption
-    const welcomeSecretKey = getWelcomeSecretKey();
-    if (!welcomeSecretKey) {
-      return Response.json(
-        { success: false, error: "Key teleport not configured (missing WELCOME_PRIVKEY)" },
-        { status: 503 }
-      );
-    }
-
     // Decode base64 blob
     let eventJson: string;
     try {
@@ -141,29 +132,14 @@ export async function handleVerifyAppBlob(req: Request): Promise<Response> {
       );
     }
 
-    // Decrypt content using NIP-44
-    let decryptedContent: string;
-    try {
-      const conversationKey = nip44.v2.utils.getConversationKey(
-        welcomeSecretKey,
-        event.pubkey
-      );
-      decryptedContent = nip44.v2.decrypt(event.content, conversationKey);
-    } catch (err) {
-      console.error("Failed to decrypt app registration:", err);
-      return Response.json(
-        { success: false, error: "Failed to decrypt content - was this encrypted for Welcome?" },
-        { status: 400 }
-      );
-    }
-
-    // Parse decrypted content
+    // Parse content directly (plaintext - no encryption needed for public app info)
+    // The signature already proves this came from the app's keypair
     let content: AppRegistrationContent;
     try {
-      content = JSON.parse(decryptedContent);
+      content = JSON.parse(event.content);
     } catch {
       return Response.json(
-        { success: false, error: "Invalid decrypted content (not valid JSON)" },
+        { success: false, error: "Invalid content (not valid JSON)" },
         { status: 400 }
       );
     }

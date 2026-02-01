@@ -121,20 +121,21 @@ CREATE TABLE user_teleport_apps (
 
 ### Registration Blob Format (from remote app)
 
+Registration blobs use **plaintext content** (no encryption). The signature proves authenticity.
+
 ```typescript
 interface RegistrationEvent {
   kind: 30078;                    // Custom kind for KeyTeleport
   pubkey: string;                 // Remote app's pubkey (hex)
   created_at: number;
   tags: [
-    ["p", "<server_pubkey>"],
     ["type", "keyteleport-app-registration"]
   ];
-  content: string;                // NIP-44 encrypted to server
+  content: string;                // JSON string (plaintext - no encryption needed)
   sig: string;
 }
 
-// Decrypted content
+// Content is plaintext JSON (public info, no secrets)
 interface AppRegistrationContent {
   url: string;                    // "https://app.com" or "nostrapp://"
   name: string;
@@ -143,7 +144,11 @@ interface AppRegistrationContent {
 }
 ```
 
-### API: Get Server Public Key
+**Why no encryption?** The registration contains only public info (URL, name, description). The signature proves it came from the app's keypair. No secrets to protect.
+
+### API: Get Server Public Key (Optional)
+
+**Note:** This endpoint is no longer required for app registration since blobs are now plaintext. It's kept for backwards compatibility and for apps that want to display Welcome's identity.
 
 ```typescript
 // GET /api/keyteleport/pubkey
@@ -162,19 +167,11 @@ export async function handleGetServerPubkey(): Promise<Response> {
 ### API: Verify Registration Blob
 
 ```typescript
-import { nip19, nip44, verifyEvent } from "nostr-tools";
+import { nip19, verifyEvent } from "nostr-tools";
 
 // POST /api/keyteleport/verify-app
 export async function handleVerifyAppBlob(req: Request): Promise<Response> {
   const { blob } = await req.json();
-
-  const serverSecretKey = getServerSecretKey();
-  if (!serverSecretKey) {
-    return Response.json(
-      { success: false, error: "Not configured" },
-      { status: 503 }
-    );
-  }
 
   // 1. Decode base64
   let event;
@@ -195,14 +192,13 @@ export async function handleVerifyAppBlob(req: Request): Promise<Response> {
     );
   }
 
-  // 3. Decrypt content
+  // 3. Parse content (plaintext JSON - no decryption needed)
   let content;
   try {
-    const ck = nip44.v2.utils.getConversationKey(serverSecretKey, event.pubkey);
-    content = JSON.parse(nip44.v2.decrypt(event.content, ck));
+    content = JSON.parse(event.content);
   } catch {
     return Response.json(
-      { success: false, error: "Decryption failed" },
+      { success: false, error: "Invalid content format" },
       { status: 400 }
     );
   }

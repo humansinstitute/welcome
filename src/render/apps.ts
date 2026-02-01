@@ -1211,6 +1211,20 @@ export function renderAppsPage(): string {
     </div>
   </div>
 
+  <!-- Password Prompt Modal for Teleport -->
+  <div class="teleport-modal-overlay" id="teleport-password-modal" hidden>
+    <div class="teleport-modal">
+      <button class="teleport-modal-close" type="button" id="teleport-password-close" aria-label="Close">&times;</button>
+      <h2>Enter Password</h2>
+      <p>Your key is encrypted. Enter your password to continue.</p>
+      <form id="teleport-password-form">
+        <input type="password" id="teleport-password-input" placeholder="Password" autocomplete="current-password" style="width:100%;padding:0.75rem;margin-bottom:1rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;" />
+        <button type="submit" class="teleport-btn">Continue</button>
+      </form>
+      <p class="teleport-error" id="teleport-password-error" hidden></p>
+    </div>
+  </div>
+
   <script type="module">
     import { nip19, finalizeEvent, getPublicKey, generateSecretKey } from 'https://esm.sh/nostr-tools@2.7.2';
     import { Relay } from 'https://esm.sh/nostr-tools@2.7.2/relay';
@@ -1395,6 +1409,16 @@ export function renderAppsPage(): string {
     const teleportCopyOpenBtn = document.getElementById('teleport-copy-open');
     const teleportError = document.getElementById('teleport-error');
     const teleportAppName = document.getElementById('teleport-app-name');
+
+    // Password prompt modal elements
+    const teleportPasswordModal = document.getElementById('teleport-password-modal');
+    const teleportPasswordClose = document.getElementById('teleport-password-close');
+    const teleportPasswordForm = document.getElementById('teleport-password-form');
+    const teleportPasswordInput = document.getElementById('teleport-password-input');
+    const teleportPasswordError = document.getElementById('teleport-password-error');
+
+    // Password prompt resolver
+    let passwordResolver = null;
 
     // Current teleport target
     let teleportTarget = null;
@@ -1669,7 +1693,28 @@ export function renderAppsPage(): string {
     }
 
     async function performTeleport() {
-      if (!teleportTarget || !nsec) return;
+      if (!teleportTarget) return;
+
+      // Check if we have nsec available
+      let currentNsec = nsec;
+      if (!currentNsec) {
+        // Try to load from Dexie with existing session key
+        currentNsec = await loadNsecFromDexie(npub);
+
+        // If still no nsec, check if encrypted key exists and prompt for password
+        if (!currentNsec && await hasStoredNsec(npub)) {
+          currentNsec = await promptForPassword();
+          if (!currentNsec) {
+            // User cancelled password prompt
+            return;
+          }
+        }
+
+        if (!currentNsec) {
+          showTeleportError('No key available. Please log in with your nsec first.');
+          return;
+        }
+      }
 
       teleportCopyOpenBtn.disabled = true;
       teleportCopyOpenBtn.textContent = 'Processing...';
@@ -1677,7 +1722,7 @@ export function renderAppsPage(): string {
 
       try {
         // Decode nsec to get secret key bytes
-        const { type, data: secretKey } = nip19.decode(nsec);
+        const { type, data: secretKey } = nip19.decode(currentNsec);
         if (type !== 'nsec') throw new Error('Invalid nsec');
 
         // Generate throwaway keypair
@@ -1686,7 +1731,7 @@ export function renderAppsPage(): string {
 
         // Encrypt nsec with NIP-44 using conversation key(user, throwaway)
         const conversationKey = nip44.v2.utils.getConversationKey(secretKey, throwawayPubkey);
-        const encryptedNsec = nip44.v2.encrypt(nsec, conversationKey);
+        const encryptedNsec = nip44.v2.encrypt(currentNsec, conversationKey);
 
         // Generate unique hash ID
         const hashId = generateHashId();
@@ -1722,8 +1767,8 @@ export function renderAppsPage(): string {
           throw new Error(data.error || 'Failed to store teleport key');
         }
 
-        // Build teleport URL with NIP-44 encrypted blob and invite code if available
-        let teleportUrl = teleportTarget.url + (teleportTarget.url.includes('?') ? '&' : '?') + 'keyteleport=' + encodeURIComponent(data.blob);
+        // Build teleport URL with NIP-44 encrypted blob in fragment (server never sees it)
+        let teleportUrl = teleportTarget.url + (teleportTarget.url.includes('#') ? '&' : '#') + 'keyteleport=' + encodeURIComponent(data.blob);
 
         // Add invite code if one exists for this app (only for admin apps)
         if (!teleportTarget.isUserApp) {
@@ -1768,6 +1813,79 @@ export function renderAppsPage(): string {
         hideTeleportModal();
       }
     });
+
+    // Password prompt modal event listeners
+    teleportPasswordClose.addEventListener('click', () => {
+      teleportPasswordModal.hidden = true;
+      if (passwordResolver) {
+        passwordResolver(null);
+        passwordResolver = null;
+      }
+    });
+
+    teleportPasswordModal.addEventListener('click', (e) => {
+      if (e.target === teleportPasswordModal) {
+        teleportPasswordModal.hidden = true;
+        if (passwordResolver) {
+          passwordResolver(null);
+          passwordResolver = null;
+        }
+      }
+    });
+
+    teleportPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = teleportPasswordInput.value;
+      if (!password) {
+        teleportPasswordError.textContent = 'Please enter your password';
+        teleportPasswordError.hidden = false;
+        return;
+      }
+
+      try {
+        const stored = await db.secrets.get(npub);
+        if (!stored) {
+          teleportPasswordError.textContent = 'No encrypted key found';
+          teleportPasswordError.hidden = false;
+          return;
+        }
+
+        const key = await deriveKeyFromPassword(password, new Uint8Array(stored.salt));
+        const decrypted = await decryptSecret(
+          new Uint8Array(stored.ciphertext),
+          key,
+          new Uint8Array(stored.iv)
+        );
+
+        // Store derived key in session for future use
+        const exportedKey = await exportKey(key);
+        sessionStorage.setItem('derivedKey', JSON.stringify(Array.from(exportedKey)));
+
+        teleportPasswordModal.hidden = true;
+        teleportPasswordInput.value = '';
+        teleportPasswordError.hidden = true;
+
+        if (passwordResolver) {
+          passwordResolver(decrypted);
+          passwordResolver = null;
+        }
+      } catch (err) {
+        console.error('Password decryption failed:', err);
+        teleportPasswordError.textContent = 'Incorrect password';
+        teleportPasswordError.hidden = false;
+      }
+    });
+
+    // Prompt for password and return decrypted nsec (or null if cancelled)
+    function promptForPassword() {
+      return new Promise((resolve) => {
+        passwordResolver = resolve;
+        teleportPasswordInput.value = '';
+        teleportPasswordError.hidden = true;
+        teleportPasswordModal.hidden = false;
+        teleportPasswordInput.focus();
+      });
+    }
 
     // === Welcome Message Functions ===
 

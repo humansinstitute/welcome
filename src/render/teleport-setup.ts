@@ -411,47 +411,21 @@ export function renderTeleportSetupPage(): string {
       <div class="wizard-step active" id="step-indicator-1">1</div>
       <div class="wizard-connector" id="connector-1"></div>
       <div class="wizard-step" id="step-indicator-2">2</div>
-      <div class="wizard-connector" id="connector-2"></div>
-      <div class="wizard-step" id="step-indicator-3">3</div>
     </div>
 
-    <!-- Step 1: Get Welcome's Pubkey -->
+    <!-- Step 1: Paste Blob -->
     <div class="step-section active" id="step-1">
       <div class="card">
-        <h2>Step 1: Copy Welcome's Public Key</h2>
-        <p>To set up Key Teleport with your app, you'll need to give your app Welcome's public key so it can encrypt the registration for us.</p>
+        <h2>Step 1: Paste the Registration Blob</h2>
+        <p>Get the registration blob from your app and paste it below. We'll verify the signature and extract the app details.</p>
 
         <div class="instructions">
           <ol>
-            <li>Copy the public key below</li>
             <li>Go to your app and find the Key Teleport setup option</li>
-            <li>Paste Welcome's public key when prompted</li>
-            <li>Your app will generate an encrypted blob for you to paste here</li>
+            <li>Click to generate and copy the registration blob</li>
+            <li>Paste the blob below</li>
           </ol>
         </div>
-
-        <label style="display:block;margin-bottom:0.5rem;font-size:0.9rem;font-weight:500;">Welcome's Public Key (npub)</label>
-        <div class="pubkey-display" id="welcome-npub">Loading...</div>
-
-        <button class="btn btn-primary btn-copy" id="copy-pubkey-btn" disabled>
-          Copy Public Key
-        </button>
-
-        <div class="status" id="step1-status" hidden></div>
-
-        <div class="actions">
-          <button class="btn btn-primary" id="step1-next" disabled>
-            I've copied it, continue &rarr;
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: Paste Blob -->
-    <div class="step-section" id="step-2">
-      <div class="card">
-        <h2>Step 2: Paste the Registration Blob</h2>
-        <p>Your app should have generated an encrypted registration blob. Paste it below and we'll verify it.</p>
 
         <div class="form-group">
           <label for="blob-input">Registration Blob</label>
@@ -461,19 +435,18 @@ export function renderTeleportSetupPage(): string {
           ></textarea>
         </div>
 
-        <div class="status" id="step2-status" hidden></div>
+        <div class="status" id="step1-status" hidden></div>
 
         <div class="actions">
-          <button class="btn btn-secondary" id="step2-back">&larr; Back</button>
-          <button class="btn btn-primary" id="step2-verify">Verify Blob</button>
+          <button class="btn btn-primary" id="step1-verify">Verify Blob</button>
         </div>
       </div>
     </div>
 
-    <!-- Step 3: Confirm -->
-    <div class="step-section" id="step-3">
+    <!-- Step 2: Confirm -->
+    <div class="step-section" id="step-2">
       <div class="card">
-        <h2>Step 3: Confirm App Details</h2>
+        <h2>Step 2: Confirm App Details</h2>
         <p>We've verified the registration. Please confirm these details are correct:</p>
 
         <div class="app-preview">
@@ -488,11 +461,11 @@ export function renderTeleportSetupPage(): string {
           <div class="app-preview-pubkey" id="preview-pubkey">npub1...</div>
         </div>
 
-        <div class="status" id="step3-status" hidden></div>
+        <div class="status" id="step2-status" hidden></div>
 
         <div class="actions">
-          <button class="btn btn-secondary" id="step3-back">&larr; Back</button>
-          <button class="btn btn-primary" id="step3-confirm">Add App</button>
+          <button class="btn btn-secondary" id="step2-back">&larr; Back</button>
+          <button class="btn btn-primary" id="step2-confirm">Add App</button>
         </div>
       </div>
     </div>
@@ -556,38 +529,30 @@ export function renderTeleportSetupPage(): string {
       window.location.href = '/onboarding';
     }
 
-    // Elements
-    const welcomeNpubEl = document.getElementById('welcome-npub');
-    const copyPubkeyBtn = document.getElementById('copy-pubkey-btn');
-    const step1Next = document.getElementById('step1-next');
+    // Elements - Step 1: Paste blob
+    const blobInput = document.getElementById('blob-input');
+    const step1Verify = document.getElementById('step1-verify');
     const step1Status = document.getElementById('step1-status');
 
-    const blobInput = document.getElementById('blob-input');
-    const step2Back = document.getElementById('step2-back');
-    const step2Verify = document.getElementById('step2-verify');
-    const step2Status = document.getElementById('step2-status');
-
+    // Elements - Step 2: Confirm
     const previewIcon = document.getElementById('preview-icon');
     const previewName = document.getElementById('preview-name');
     const previewUrl = document.getElementById('preview-url');
     const previewDescription = document.getElementById('preview-description');
     const previewPubkey = document.getElementById('preview-pubkey');
-    const step3Back = document.getElementById('step3-back');
-    const step3Confirm = document.getElementById('step3-confirm');
-    const step3Status = document.getElementById('step3-status');
+    const step2Back = document.getElementById('step2-back');
+    const step2Confirm = document.getElementById('step2-confirm');
+    const step2Status = document.getElementById('step2-status');
 
     // Step sections
     const step1 = document.getElementById('step-1');
     const step2 = document.getElementById('step-2');
-    const step3 = document.getElementById('step-3');
     const stepSuccess = document.getElementById('step-success');
 
     // Progress indicators
     const stepIndicator1 = document.getElementById('step-indicator-1');
     const stepIndicator2 = document.getElementById('step-indicator-2');
-    const stepIndicator3 = document.getElementById('step-indicator-3');
     const connector1 = document.getElementById('connector-1');
-    const connector2 = document.getElementById('connector-2');
 
     // Verified app data
     let verifiedApp = null;
@@ -596,14 +561,11 @@ export function renderTeleportSetupPage(): string {
     function showStep(stepNum) {
       step1.classList.remove('active');
       step2.classList.remove('active');
-      step3.classList.remove('active');
       stepSuccess.classList.remove('active');
 
       stepIndicator1.classList.remove('active', 'completed');
       stepIndicator2.classList.remove('active', 'completed');
-      stepIndicator3.classList.remove('active', 'completed');
       connector1.classList.remove('completed');
-      connector2.classList.remove('completed');
 
       if (stepNum === 1) {
         step1.classList.add('active');
@@ -613,20 +575,11 @@ export function renderTeleportSetupPage(): string {
         stepIndicator1.classList.add('completed');
         stepIndicator2.classList.add('active');
         connector1.classList.add('completed');
-      } else if (stepNum === 3) {
-        step3.classList.add('active');
-        stepIndicator1.classList.add('completed');
-        stepIndicator2.classList.add('completed');
-        stepIndicator3.classList.add('active');
-        connector1.classList.add('completed');
-        connector2.classList.add('completed');
       } else if (stepNum === 'success') {
         stepSuccess.classList.add('active');
         stepIndicator1.classList.add('completed');
         stepIndicator2.classList.add('completed');
-        stepIndicator3.classList.add('completed');
         connector1.classList.add('completed');
-        connector2.classList.add('completed');
       }
     }
 
@@ -641,66 +594,17 @@ export function renderTeleportSetupPage(): string {
       el.hidden = true;
     }
 
-    // Load Welcome's pubkey
-    async function loadWelcomePubkey() {
-      try {
-        const res = await fetch('/api/teleport/welcome-pubkey');
-        const data = await res.json();
-
-        if (!data.success) {
-          welcomeNpubEl.textContent = 'Error: ' + (data.error || 'Could not load pubkey');
-          return;
-        }
-
-        welcomeNpubEl.textContent = data.npub;
-        copyPubkeyBtn.disabled = false;
-        step1Next.disabled = false;
-      } catch (err) {
-        console.error('Failed to load Welcome pubkey:', err);
-        welcomeNpubEl.textContent = 'Error loading pubkey';
-      }
-    }
-
-    // Copy pubkey
-    copyPubkeyBtn.addEventListener('click', async () => {
-      const pubkey = welcomeNpubEl.textContent;
-      if (!pubkey || pubkey.startsWith('Error') || pubkey === 'Loading...') return;
-
-      try {
-        await navigator.clipboard.writeText(pubkey);
-        copyPubkeyBtn.textContent = 'Copied!';
-        showStatus(step1Status, 'Public key copied to clipboard', 'success');
-        setTimeout(() => {
-          copyPubkeyBtn.textContent = 'Copy Public Key';
-        }, 2000);
-      } catch (err) {
-        showStatus(step1Status, 'Failed to copy to clipboard', 'error');
-      }
-    });
-
-    // Step 1 next
-    step1Next.addEventListener('click', () => {
-      hideStatus(step1Status);
-      showStep(2);
-    });
-
-    // Step 2 back
-    step2Back.addEventListener('click', () => {
-      hideStatus(step2Status);
-      showStep(1);
-    });
-
-    // Step 2 verify
-    step2Verify.addEventListener('click', async () => {
+    // Step 1 verify blob
+    step1Verify.addEventListener('click', async () => {
       const blob = blobInput.value.trim();
       if (!blob) {
-        showStatus(step2Status, 'Please paste the registration blob', 'error');
+        showStatus(step1Status, 'Please paste the registration blob', 'error');
         return;
       }
 
-      hideStatus(step2Status);
-      step2Verify.disabled = true;
-      step2Verify.textContent = 'Verifying...';
+      hideStatus(step1Status);
+      step1Verify.disabled = true;
+      step1Verify.textContent = 'Verifying...';
 
       try {
         const res = await fetch('/api/teleport/verify-app', {
@@ -712,7 +616,7 @@ export function renderTeleportSetupPage(): string {
         const data = await res.json();
 
         if (!data.success) {
-          showStatus(step2Status, data.error || 'Verification failed', 'error');
+          showStatus(step1Status, data.error || 'Verification failed', 'error');
           return;
         }
 
@@ -739,32 +643,32 @@ export function renderTeleportSetupPage(): string {
           previewDescription.hidden = true;
         }
 
-        showStep(3);
+        showStep(2);
       } catch (err) {
         console.error('Verify error:', err);
-        showStatus(step2Status, 'Failed to verify blob', 'error');
+        showStatus(step1Status, 'Failed to verify blob', 'error');
       } finally {
-        step2Verify.disabled = false;
-        step2Verify.textContent = 'Verify Blob';
+        step1Verify.disabled = false;
+        step1Verify.textContent = 'Verify Blob';
       }
     });
 
-    // Step 3 back
-    step3Back.addEventListener('click', () => {
-      hideStatus(step3Status);
-      showStep(2);
+    // Step 2 back
+    step2Back.addEventListener('click', () => {
+      hideStatus(step2Status);
+      showStep(1);
     });
 
-    // Step 3 confirm
-    step3Confirm.addEventListener('click', async () => {
+    // Step 2 confirm
+    step2Confirm.addEventListener('click', async () => {
       if (!verifiedApp) {
-        showStatus(step3Status, 'No verified app data', 'error');
+        showStatus(step2Status, 'No verified app data', 'error');
         return;
       }
 
-      hideStatus(step3Status);
-      step3Confirm.disabled = true;
-      step3Confirm.textContent = 'Adding...';
+      hideStatus(step2Status);
+      step2Confirm.disabled = true;
+      step2Confirm.textContent = 'Adding...';
 
       try {
         const res = await fetch('/api/teleport/add-app', {
@@ -785,22 +689,19 @@ export function renderTeleportSetupPage(): string {
         const data = await res.json();
 
         if (!data.success) {
-          showStatus(step3Status, data.error || 'Failed to add app', 'error');
+          showStatus(step2Status, data.error || 'Failed to add app', 'error');
           return;
         }
 
         showStep('success');
       } catch (err) {
         console.error('Add app error:', err);
-        showStatus(step3Status, 'Failed to add app', 'error');
+        showStatus(step2Status, 'Failed to add app', 'error');
       } finally {
-        step3Confirm.disabled = false;
-        step3Confirm.textContent = 'Add App';
+        step2Confirm.disabled = false;
+        step2Confirm.textContent = 'Add App';
       }
     });
-
-    // Initialize
-    loadWelcomePubkey();
   </script>
 </body>
 </html>`;
