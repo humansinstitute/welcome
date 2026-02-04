@@ -734,6 +734,77 @@ export function renderAppsPage(): string {
       display: none;
     }
 
+    /* Teleport Fallback UI for mobile permission errors */
+    .teleport-fallback {
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .teleport-fallback[hidden] {
+      display: none;
+    }
+
+    .teleport-fallback-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .teleport-fallback-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .teleport-fallback-input {
+      flex: 1;
+      padding: 0.75rem;
+      font-size: 0.85rem;
+      font-family: var(--font-mono, monospace);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-alt, #f9f8f6);
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .teleport-fallback-input:focus {
+      outline: 2px solid var(--purple);
+      outline-offset: 1px;
+    }
+
+    .teleport-copy-btn {
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      background: var(--surface-alt, #f9f8f6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .teleport-copy-btn:hover {
+      background: var(--border);
+    }
+
+    .teleport-copy-btn.copied {
+      background: var(--success, #4ade80);
+      color: white;
+      border-color: var(--success, #4ade80);
+    }
+
+    .teleport-fallback-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: var(--surface-alt, #f9f8f6);
+      border-radius: var(--radius-sm);
+      line-height: 1.5;
+    }
+
     /* Welcome Message Component */
     .welcome-message-card {
       background: var(--surface);
@@ -1208,6 +1279,25 @@ export function renderAppsPage(): string {
       <p class="teleport-instructions">Paste the code when prompted to complete login.</p>
       <button id="teleport-copy-open" class="teleport-btn">Copy Code &amp; Open App</button>
       <p class="teleport-error" id="teleport-error" hidden></p>
+
+      <!-- Fallback UI for mobile permission errors -->
+      <div class="teleport-fallback" id="teleport-fallback" hidden>
+        <label class="teleport-fallback-label">1. Copy and open this URL in a new tab:</label>
+        <div class="teleport-fallback-box">
+          <input type="text" class="teleport-fallback-input" id="teleport-fallback-url" readonly />
+          <button type="button" class="teleport-copy-btn" id="teleport-copy-url-btn">Copy</button>
+        </div>
+
+        <label class="teleport-fallback-label">2. Copy your unlock code:</label>
+        <div class="teleport-fallback-box">
+          <input type="password" class="teleport-fallback-input" id="teleport-fallback-nsec" readonly />
+          <button type="button" class="teleport-copy-btn" id="teleport-copy-nsec-btn">Copy</button>
+        </div>
+
+        <div class="teleport-fallback-note">
+          Open the URL above in your browser, then paste the unlock code when prompted.
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1409,6 +1499,13 @@ export function renderAppsPage(): string {
     const teleportCopyOpenBtn = document.getElementById('teleport-copy-open');
     const teleportError = document.getElementById('teleport-error');
     const teleportAppName = document.getElementById('teleport-app-name');
+
+    // Teleport fallback elements (for mobile permission errors)
+    const teleportFallback = document.getElementById('teleport-fallback');
+    const teleportFallbackUrl = document.getElementById('teleport-fallback-url');
+    const teleportFallbackNsec = document.getElementById('teleport-fallback-nsec');
+    const teleportCopyUrlBtn = document.getElementById('teleport-copy-url-btn');
+    const teleportCopyNsecBtn = document.getElementById('teleport-copy-nsec-btn');
 
     // Password prompt modal elements
     const teleportPasswordModal = document.getElementById('teleport-password-modal');
@@ -1671,10 +1768,29 @@ export function renderAppsPage(): string {
       teleportError.hidden = true;
     }
 
+    function hideTeleportFallback() {
+      teleportFallback.hidden = true;
+      teleportFallbackUrl.value = '';
+      teleportFallbackNsec.value = '';
+      teleportCopyUrlBtn.textContent = 'Copy';
+      teleportCopyUrlBtn.classList.remove('copied');
+      teleportCopyNsecBtn.textContent = 'Copy';
+      teleportCopyNsecBtn.classList.remove('copied');
+    }
+
+    function showTeleportFallback(url, nsecCode) {
+      teleportFallbackUrl.value = url;
+      teleportFallbackNsec.value = nsecCode;
+      teleportFallback.hidden = false;
+      teleportCopyOpenBtn.hidden = true;
+    }
+
     function showTeleportModal(app) {
       teleportTarget = app;
       teleportAppName.textContent = app.name;
       hideTeleportError();
+      hideTeleportFallback();
+      teleportCopyOpenBtn.hidden = false;
       teleportCopyOpenBtn.disabled = false;
       teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
       teleportModal.hidden = false;
@@ -1684,6 +1800,7 @@ export function renderAppsPage(): string {
       teleportModal.hidden = true;
       teleportTarget = null;
       hideTeleportError();
+      hideTeleportFallback();
     }
 
     function generateHashId() {
@@ -1780,12 +1897,20 @@ export function renderAppsPage(): string {
 
         // Copy throwaway nsec to clipboard (the unlock code)
         const throwawayNsec = nip19.nsecEncode(throwawayPrivkey);
-        await navigator.clipboard.writeText(throwawayNsec);
 
-        // Open remote app
-        window.open(teleportUrl, '_blank');
-
-        hideTeleportModal();
+        // Try clipboard + window.open, fall back to manual copy UI on mobile permission errors
+        try {
+          await navigator.clipboard.writeText(throwawayNsec);
+          window.open(teleportUrl, '_blank');
+          hideTeleportModal();
+        } catch (clipboardErr) {
+          // Mobile browsers often block clipboard/popups after async operations
+          // Show fallback UI with copyable fields
+          console.warn('Clipboard/popup blocked, showing fallback UI:', clipboardErr.message);
+          showTeleportFallback(teleportUrl, throwawayNsec);
+          teleportCopyOpenBtn.disabled = false;
+          teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
+        }
       } catch (err) {
         console.error('Teleport error:', err);
         showTeleportError(err.message || 'Failed to transfer identity');
@@ -1812,6 +1937,43 @@ export function renderAppsPage(): string {
       if (e.key === 'Escape') {
         hideTeleportModal();
       }
+    });
+
+    // Fallback copy button handlers
+    async function copyWithFeedback(inputEl, btnEl) {
+      const value = inputEl.value;
+      if (!value) return;
+
+      try {
+        await navigator.clipboard.writeText(value);
+        btnEl.textContent = 'Copied!';
+        btnEl.classList.add('copied');
+        setTimeout(() => {
+          btnEl.textContent = 'Copy';
+          btnEl.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        // If clipboard still fails, select the text so user can copy manually
+        inputEl.type = 'text';
+        inputEl.select();
+        inputEl.setSelectionRange(0, 99999); // For mobile
+        btnEl.textContent = 'Select & Copy';
+      }
+    }
+
+    teleportCopyUrlBtn.addEventListener('click', () => {
+      copyWithFeedback(teleportFallbackUrl, teleportCopyUrlBtn);
+    });
+
+    teleportCopyNsecBtn.addEventListener('click', () => {
+      // Temporarily show the nsec for copying
+      teleportFallbackNsec.type = 'text';
+      copyWithFeedback(teleportFallbackNsec, teleportCopyNsecBtn).then(() => {
+        // Hide it again after a brief moment
+        setTimeout(() => {
+          teleportFallbackNsec.type = 'password';
+        }, 3000);
+      });
     });
 
     // Password prompt modal event listeners
