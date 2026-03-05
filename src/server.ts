@@ -5,8 +5,16 @@ import { renderAppsPage } from "./render/apps.ts";
 import { renderOnboardingPage } from "./render/onboarding.ts";
 import { renderAdminPage } from "./render/admin.ts";
 import { renderTeleportSetupPage } from "./render/teleport-setup.ts";
-import { handleSignup, handleRecover, handleExtensionLogin } from "./routes/auth.ts";
 import {
+  handleSignup,
+  handleRecover,
+  handleExtensionLogin,
+  handleGetTeleportKeyStatus,
+  handleStoreTeleportKeyMaterial,
+  handleDeleteTeleportKeyMaterial,
+} from "./routes/auth.ts";
+import {
+  handleGetUsers,
   handleGetInviteCodes,
   handleCreateInviteCode,
   handleUpdateInviteCode,
@@ -119,7 +127,23 @@ const server = Bun.serve({
       return handleExtensionLogin(req);
     }
 
+    if (path === "/auth/teleport-key" && method === "GET") {
+      return handleGetTeleportKeyStatus(req);
+    }
+
+    if (path === "/auth/teleport-key" && method === "POST") {
+      return handleStoreTeleportKeyMaterial(req);
+    }
+
+    if (path === "/auth/teleport-key" && method === "DELETE") {
+      return handleDeleteTeleportKeyMaterial(req);
+    }
+
     // Admin routes
+    if (path === "/admin/users" && method === "GET") {
+      return handleGetUsers(req);
+    }
+
     if (path === "/admin/codes" && method === "GET") {
       return handleGetInviteCodes(req);
     }

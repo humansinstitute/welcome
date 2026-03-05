@@ -441,6 +441,9 @@ export function renderWelcomePage(): string {
       <button class="btn btn-login" id="btn-login">
         Log me back in
       </button>
+      <button class="btn btn-secondary" id="btn-extension-main">
+        Sign in with Extension
+      </button>
     </div>
 
     <details class="advanced-section">
@@ -655,6 +658,7 @@ export function renderWelcomePage(): string {
     const btnSignup = document.getElementById('btn-signup');
     const btnLogin = document.getElementById('btn-login');
     const btnExtension = document.getElementById('btn-extension');
+    const btnExtensionMain = document.getElementById('btn-extension-main');
     const bunkerForm = document.getElementById('bunker-form');
     const secretForm = document.getElementById('secret-form');
     const authError = document.getElementById('auth-error');
@@ -954,7 +958,7 @@ export function renderWelcomePage(): string {
     });
 
     // Extension login - validates with backend, handles invite codes for new users
-    btnExtension.addEventListener('click', async () => {
+    async function handleExtensionSignIn() {
       if (!window.nostr) {
         showError('No Nostr extension found. Install nos2x, Alby, or similar.');
         return;
@@ -996,7 +1000,12 @@ export function renderWelcomePage(): string {
       } catch (err) {
         showError('Extension denied access or failed.');
       }
-    });
+    }
+
+    btnExtension.addEventListener('click', handleExtensionSignIn);
+    if (btnExtensionMain) {
+      btnExtensionMain.addEventListener('click', handleExtensionSignIn);
+    }
 
     // Bunker connection (no invite code needed - existing Nostr user)
     bunkerForm.addEventListener('submit', (e) => {

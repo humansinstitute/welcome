@@ -12,6 +12,7 @@ db.run(`
     email TEXT NOT NULL UNIQUE,
     npub TEXT NOT NULL UNIQUE,
     ncryptsec TEXT NOT NULL,
+    teleport_nsec_nip44 TEXT DEFAULT NULL,
     password_hash TEXT NOT NULL,
     salt TEXT NOT NULL,
     invite_code TEXT NOT NULL,
@@ -21,6 +22,13 @@ db.run(`
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Migration: Add teleport_nsec_nip44 column to users if it doesn't exist
+try {
+  db.run("ALTER TABLE users ADD COLUMN teleport_nsec_nip44 TEXT DEFAULT NULL");
+} catch {
+  // Column already exists, ignore
+}
 
 // Migration: Add welcome_dismissed column to users if it doesn't exist
 try {
@@ -229,6 +237,22 @@ const updateOnboardingStatusStmt = db.query<User, [string, string]>(
   `UPDATE users SET onboarding_status = ?, updated_at = CURRENT_TIMESTAMP
    WHERE npub = ? RETURNING *`
 );
+const updateUserTeleportNip44Stmt = db.query<User, [string, string]>(
+  `UPDATE users SET teleport_nsec_nip44 = ?, updated_at = CURRENT_TIMESTAMP
+   WHERE npub = ? RETURNING *`
+);
+const clearUserTeleportNip44Stmt = db.query<User, [string]>(
+  `UPDATE users SET teleport_nsec_nip44 = NULL, updated_at = CURRENT_TIMESTAMP
+   WHERE npub = ? RETURNING *`
+);
+const getUserTeleportNip44Stmt = db.query<{ teleport_nsec_nip44: string | null }, [string]>(
+  "SELECT teleport_nsec_nip44 FROM users WHERE npub = ?"
+);
+
+// Prepared statements - All Users (admin)
+const getAllUsersStmt = db.query<User, []>(
+  "SELECT * FROM users ORDER BY created_at DESC"
+);
 
 // Prepared statements - Apps
 const getAppsByUserIdStmt = db.query<App & { role: string }, [number]>(
@@ -299,6 +323,37 @@ export function updateOnboardingStatus(
   if (!npub) return null;
   const user = updateOnboardingStatusStmt.get(status, npub) as User | undefined;
   return user ?? null;
+}
+
+export function setUserTeleportNip44(npub: string, encryptedNsecNip44: string): boolean {
+  if (!npub || !encryptedNsecNip44) return false;
+  try {
+    const user = updateUserTeleportNip44Stmt.get(encryptedNsecNip44, npub) as User | undefined;
+    return !!user;
+  } catch {
+    return false;
+  }
+}
+
+export function clearUserTeleportNip44(npub: string): boolean {
+  if (!npub) return false;
+  try {
+    const user = clearUserTeleportNip44Stmt.get(npub) as User | undefined;
+    return !!user;
+  } catch {
+    return false;
+  }
+}
+
+export function getUserTeleportNip44(npub: string): string | null {
+  if (!npub) return null;
+  const row = getUserTeleportNip44Stmt.get(npub) as { teleport_nsec_nip44: string | null } | undefined;
+  return row?.teleport_nsec_nip44 ?? null;
+}
+
+// All users (admin)
+export function getAllUsers(): User[] {
+  return getAllUsersStmt.all();
 }
 
 // App functions

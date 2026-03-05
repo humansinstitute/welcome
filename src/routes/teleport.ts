@@ -1,5 +1,12 @@
 import { nip19, nip44, finalizeEvent, getPublicKey } from "nostr-tools";
-import { getTeleportKey, deleteTeleportKey, storeTeleportKey, getVisibleAppsForNpub, getAppById } from "../db.ts";
+import {
+  getTeleportKey,
+  deleteTeleportKey,
+  storeTeleportKey,
+  getVisibleAppsForNpub,
+  getAppById,
+  getUserTeleportNip44,
+} from "../db.ts";
 import { TELEPORT_EXPIRY_SECONDS, WELCOME_PRIVKEY } from "../config.ts";
 
 // Helper to convert hex string to Uint8Array
@@ -49,6 +56,19 @@ function decodeTeleportPubkey(pubkey: string): string | null {
   return null;
 }
 
+function decodeNpubToHex(npub: string): string | null {
+  if (!npub) return null;
+  try {
+    const decoded = nip19.decode(npub);
+    if (decoded.type === "npub") {
+      return decoded.data as string;
+    }
+  } catch (err) {
+    console.error("Failed to decode npub:", err);
+  }
+  return null;
+}
+
 // GET /api/apps - Get visible apps for authenticated users
 export async function handleGetPublicApps(req: Request): Promise<Response> {
   try {
@@ -76,18 +96,20 @@ export async function handleGetPublicApps(req: Request): Promise<Response> {
 export async function handleStoreTeleportKey(req: Request): Promise<Response> {
   try {
     const body = await req.json();
-    const { hashId, encryptedNsec, npub, appId, appPubkey, baseUrl } = body;
+    const {
+      hashId,
+      encryptedNsec,
+      npub,
+      appId,
+      appPubkey,
+      baseUrl,
+      useStoredTeleportKey,
+      throwawayPubkey,
+    } = body;
 
     if (!hashId || typeof hashId !== "string") {
       return Response.json(
         { success: false, error: "hashId is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!encryptedNsec || typeof encryptedNsec !== "string") {
-      return Response.json(
-        { success: false, error: "encryptedNsec is required" },
         { status: 400 }
       );
     }
@@ -143,10 +165,89 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
       );
     }
 
+    let encryptedNsecToStore = encryptedNsec as string | undefined;
+
+    if (useStoredTeleportKey) {
+      if (!throwawayPubkey || typeof throwawayPubkey !== "string") {
+        return Response.json(
+          { success: false, error: "throwawayPubkey is required when useStoredTeleportKey is true" },
+          { status: 400 }
+        );
+      }
+
+      if (throwawayPubkey.length !== 64) {
+        return Response.json(
+          { success: false, error: "Invalid throwawayPubkey format" },
+          { status: 400 }
+        );
+      }
+
+      const storedEncryptedNsec = getUserTeleportNip44(npub);
+      if (!storedEncryptedNsec) {
+        return Response.json(
+          { success: false, error: "No stored teleport key for this user" },
+          { status: 400 }
+        );
+      }
+
+      const userPubkeyHex = decodeNpubToHex(npub);
+      if (!userPubkeyHex) {
+        return Response.json(
+          { success: false, error: "Invalid npub format" },
+          { status: 400 }
+        );
+      }
+
+      let decryptedNsec: string;
+      try {
+        const storedConversationKey = nip44.v2.utils.getConversationKey(welcomeSecretKey, userPubkeyHex);
+        decryptedNsec = nip44.v2.decrypt(storedEncryptedNsec, storedConversationKey);
+      } catch {
+        return Response.json(
+          { success: false, error: "Failed to decrypt stored teleport key" },
+          { status: 500 }
+        );
+      }
+
+      try {
+        const decoded = nip19.decode(decryptedNsec);
+        if (decoded.type !== "nsec") {
+          return Response.json(
+            { success: false, error: "Stored key is invalid" },
+            { status: 500 }
+          );
+        }
+
+        const userSecretKey = decoded.data as Uint8Array;
+        const derivedNpub = nip19.npubEncode(getPublicKey(userSecretKey));
+        if (derivedNpub !== npub) {
+          return Response.json(
+            { success: false, error: "Stored key does not match account" },
+            { status: 400 }
+          );
+        }
+
+        const innerConversationKey = nip44.v2.utils.getConversationKey(userSecretKey, throwawayPubkey);
+        encryptedNsecToStore = nip44.v2.encrypt(decryptedNsec, innerConversationKey);
+      } catch {
+        return Response.json(
+          { success: false, error: "Stored key processing failed" },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (!encryptedNsecToStore || typeof encryptedNsecToStore !== "string") {
+      return Response.json(
+        { success: false, error: "encryptedNsec is required" },
+        { status: 400 }
+      );
+    }
+
     const expiresAt = Math.floor(Date.now() / 1000) + TELEPORT_EXPIRY_SECONDS;
 
     // Store the key
-    const teleportKey = storeTeleportKey(hashId, encryptedNsec, npub, expiresAt);
+    const teleportKey = storeTeleportKey(hashId, encryptedNsecToStore, npub, expiresAt);
     if (!teleportKey) {
       return Response.json(
         { success: false, error: "Failed to store teleport key" },
@@ -157,7 +258,7 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
     // Create the payload for the receiving app (self-contained - no callback needed)
     // encryptedNsec is already encrypted by browser with user's key + throwaway pubkey
     const payload = {
-      encryptedNsec,  // Inner-encrypted nsec (browser did: NIP-44(nsec, userKey + throwawayPubkey))
+      encryptedNsec: encryptedNsecToStore,  // Inner-encrypted nsec
       npub,           // User's public key - needed for inner decryption
       v: 1            // Protocol version
     };

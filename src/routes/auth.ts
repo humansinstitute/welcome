@@ -1,5 +1,6 @@
+import { nip19, nip44, getPublicKey } from "nostr-tools";
 import { signup, recover } from "../services/auth.ts";
-import { ADMIN_NPUB } from "../config.ts";
+import { ADMIN_NPUB, WELCOME_PRIVKEY } from "../config.ts";
 import {
   isValidInviteCode,
   useInviteCode,
@@ -7,7 +8,45 @@ import {
   addUserToGroup,
   getUserByNpub,
   createExtensionUser,
+  setUserTeleportNip44,
+  getUserTeleportNip44,
+  clearUserTeleportNip44,
 } from "../db.ts";
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+  }
+  return bytes;
+}
+
+function getWelcomeSecretKey(): Uint8Array | null {
+  if (!WELCOME_PRIVKEY) return null;
+  try {
+    if (WELCOME_PRIVKEY.startsWith("nsec1")) {
+      const decoded = nip19.decode(WELCOME_PRIVKEY);
+      if (decoded.type === "nsec") return decoded.data as Uint8Array;
+      return null;
+    }
+    if (WELCOME_PRIVKEY.length === 64) {
+      return hexToBytes(WELCOME_PRIVKEY);
+    }
+  } catch (err) {
+    console.error("Failed to decode WELCOME_PRIVKEY:", err);
+  }
+  return null;
+}
+
+function decodeNpubToHex(npub: string): string | null {
+  try {
+    const decoded = nip19.decode(npub);
+    if (decoded.type !== "npub") return null;
+    return decoded.data as string;
+  } catch {
+    return null;
+  }
+}
 
 export async function handleSignup(req: Request): Promise<Response> {
   try {
@@ -202,6 +241,175 @@ export async function handleExtensionLogin(req: Request): Promise<Response> {
     });
   } catch (err) {
     console.error("Extension login error:", err);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /auth/teleport-key - Check if user has a stored teleport key
+export async function handleGetTeleportKeyStatus(req: Request): Promise<Response> {
+  try {
+    const npub = req.headers.get("X-Npub");
+    if (!npub || !npub.startsWith("npub1")) {
+      return Response.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const user = getUserByNpub(npub);
+    if (!user) {
+      return Response.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const encrypted = getUserTeleportNip44(npub);
+    return Response.json({
+      success: true,
+      hasTeleportKey: !!encrypted,
+      mode: "nip44",
+    });
+  } catch (err) {
+    console.error("Teleport key status error:", err);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /auth/teleport-key - Store user's NIP-44 encrypted teleport key
+export async function handleStoreTeleportKeyMaterial(req: Request): Promise<Response> {
+  try {
+    const npub = req.headers.get("X-Npub");
+    if (!npub || !npub.startsWith("npub1")) {
+      return Response.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const user = getUserByNpub(npub);
+    if (!user) {
+      return Response.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const body = await req.json();
+    const { encryptedNsecNip44 } = body;
+
+    if (!encryptedNsecNip44 || typeof encryptedNsecNip44 !== "string") {
+      return Response.json(
+        { success: false, error: "encryptedNsecNip44 is required" },
+        { status: 400 }
+      );
+    }
+
+    const welcomeSecretKey = getWelcomeSecretKey();
+    if (!welcomeSecretKey) {
+      return Response.json(
+        { success: false, error: "Key teleport not configured (missing WELCOME_PRIVKEY)" },
+        { status: 503 }
+      );
+    }
+
+    const userPubkeyHex = decodeNpubToHex(npub);
+    if (!userPubkeyHex) {
+      return Response.json(
+        { success: false, error: "Invalid npub format" },
+        { status: 400 }
+      );
+    }
+
+    // Validate ciphertext by decrypting and confirming key ownership.
+    const conversationKey = nip44.v2.utils.getConversationKey(welcomeSecretKey, userPubkeyHex);
+    let decryptedNsec: string;
+    try {
+      decryptedNsec = nip44.v2.decrypt(encryptedNsecNip44, conversationKey);
+    } catch {
+      return Response.json(
+        { success: false, error: "Invalid NIP-44 encrypted key payload" },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const decoded = nip19.decode(decryptedNsec);
+      if (decoded.type !== "nsec") {
+        return Response.json(
+          { success: false, error: "Decrypted key is not a valid nsec" },
+          { status: 400 }
+        );
+      }
+
+      const derivedNpub = nip19.npubEncode(getPublicKey(decoded.data as Uint8Array));
+      if (derivedNpub !== npub) {
+        return Response.json(
+          { success: false, error: "Key does not match signed-in account" },
+          { status: 400 }
+        );
+      }
+    } catch {
+      return Response.json(
+        { success: false, error: "Invalid key format after decrypt" },
+        { status: 400 }
+      );
+    }
+
+    const saved = setUserTeleportNip44(npub, encryptedNsecNip44);
+    if (!saved) {
+      return Response.json(
+        { success: false, error: "Failed to store teleport key" },
+        { status: 500 }
+      );
+    }
+
+    return Response.json({ success: true, hasTeleportKey: true });
+  } catch (err) {
+    console.error("Store teleport key error:", err);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /auth/teleport-key - Remove stored teleport key
+export async function handleDeleteTeleportKeyMaterial(req: Request): Promise<Response> {
+  try {
+    const npub = req.headers.get("X-Npub");
+    if (!npub || !npub.startsWith("npub1")) {
+      return Response.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const user = getUserByNpub(npub);
+    if (!user) {
+      return Response.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const removed = clearUserTeleportNip44(npub);
+    if (!removed) {
+      return Response.json(
+        { success: false, error: "Failed to remove teleport key" },
+        { status: 500 }
+      );
+    }
+
+    return Response.json({ success: true, hasTeleportKey: false });
+  } catch (err) {
+    console.error("Delete teleport key error:", err);
     return Response.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

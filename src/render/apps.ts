@@ -369,6 +369,22 @@ export function renderAppsPage(): string {
       border: 1px solid var(--border-soft);
     }
 
+    .profile-teleport-badge {
+      display: inline-block;
+      margin: 0 0 1rem;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #166534;
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      border-radius: 999px;
+    }
+
+    .profile-teleport-badge[hidden] {
+      display: none;
+    }
+
     /* Export Key Section */
     .export-key-section {
       display: block;
@@ -1091,6 +1107,64 @@ export function renderAppsPage(): string {
       color: var(--purple-light);
     }
 
+    /* Teleport Key Vault */
+    .key-vault-card {
+      margin-bottom: 1.5rem;
+    }
+
+    .key-vault-status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .key-vault-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .key-vault-form input {
+      width: 100%;
+      padding: 0.7rem 0.75rem;
+      font-size: 0.85rem;
+      font-family: monospace;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-warm);
+      color: var(--text);
+    }
+
+    .key-vault-form input:focus {
+      outline: 2px solid var(--purple);
+      outline-offset: 1px;
+    }
+
+    .key-vault-remove-btn {
+      margin-top: 0.7rem;
+      width: 100%;
+      background: var(--surface-warm);
+      color: var(--text-warm);
+      border: 1px solid var(--border);
+    }
+
+    .key-vault-remove-btn:hover {
+      border-color: var(--error);
+      color: var(--error);
+      background: #fef2f2;
+    }
+
+    .key-vault-error {
+      margin-top: 0.7rem;
+      font-size: 0.85rem;
+      color: var(--error);
+    }
+
+    .key-vault-error[hidden] {
+      display: none;
+    }
+
     /* User app item with delete button */
     .user-app-item {
       display: flex;
@@ -1134,6 +1208,247 @@ export function renderAppsPage(): string {
       border-color: var(--error);
       color: var(--error);
       background: #fef2f2;
+    }
+
+    /* Remote Signer Card */
+    .signer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+    .signer-card[hidden] { display: none; }
+    .signer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      background: var(--surface-warm);
+      border-bottom: 1px solid var(--border-soft);
+      transition: background 0.2s;
+    }
+    .signer-header:hover { background: var(--border-soft); }
+    .signer-header h2 {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 400;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .signer-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .signer-badge.active {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .signer-badge.inactive {
+      background: var(--surface-warm);
+      color: var(--muted);
+    }
+    .signer-content { padding: 1.5rem; }
+    .signer-card.collapsed .signer-content { display: none; }
+    .signer-card.collapsed .signer-header .chevron { transform: rotate(-90deg); }
+    .signer-header .chevron {
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .signer-info {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .signer-bunker-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.35rem;
+    }
+    .signer-bunker-row input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      font-family: monospace;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-warm);
+      color: var(--text);
+    }
+    .signer-bunker-row button {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .signer-bunker-row button:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+    .signer-section-title {
+      font-family: var(--font-serif);
+      font-size: 0.9rem;
+      font-weight: 400;
+      margin: 1rem 0 0.5rem;
+      color: var(--text);
+    }
+    .signer-client-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface-warm);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .signer-client-pub {
+      font-family: monospace;
+      color: var(--text-warm);
+    }
+    .signer-client-time {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .approval-item {
+      padding: 0.75rem;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+    }
+    .approval-desc {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .approval-client {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .approval-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .approval-actions button {
+      flex: 1;
+      padding: 0.4rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .approval-approve {
+      background: var(--success);
+      color: white;
+      border: none;
+    }
+    .approval-reject {
+      background: var(--surface);
+      color: var(--error);
+      border: 1px solid var(--error);
+    }
+    .signer-session-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface-warm);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .signer-session-name { font-weight: 500; }
+    .signer-session-revoke {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.7rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .signer-session-revoke:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+    .signer-policy-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-warm);
+    }
+    .signer-policy-row select {
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+
+    /* Teleport Mode Selector */
+    .teleport-mode-select {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .teleport-mode-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .teleport-mode-option:has(input:checked) {
+      border-color: var(--purple);
+      background: #faf5ff;
+    }
+    .teleport-mode-option input[type="radio"] {
+      margin-top: 0.15rem;
+      accent-color: var(--purple);
+    }
+    .teleport-mode-label strong {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.15rem;
+    }
+    .teleport-mode-label small {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .teleport-mode-info {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+      text-align: left;
     }
   </style>
 </head>
@@ -1181,6 +1496,65 @@ export function renderAppsPage(): string {
       </div>
     </div>
 
+    <!-- Remote Signer Card -->
+    <div class="signer-card" id="signer-card" hidden>
+      <div class="signer-header" id="signer-header">
+        <h2>Remote Signer <span class="signer-badge inactive" id="signer-badge">Inactive</span></h2>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="signer-content" id="signer-content">
+        <div class="signer-info" id="signer-info">Connecting to relays...</div>
+
+        <label style="font-size:0.8rem;color:var(--text-warm);display:block;margin-bottom:0.25rem;">Bunker URI</label>
+        <div class="signer-bunker-row">
+          <input type="text" id="signer-bunker-uri" readonly />
+          <button type="button" id="signer-copy-uri">Copy</button>
+        </div>
+
+        <div id="signer-approvals-section" hidden>
+          <h3 class="signer-section-title">Pending Approvals</h3>
+          <div id="signer-approvals-list"></div>
+        </div>
+
+        <div id="signer-clients-section" hidden>
+          <h3 class="signer-section-title">Connected Apps</h3>
+          <div id="signer-clients-list"></div>
+        </div>
+
+        <div id="signer-sessions-section" hidden>
+          <h3 class="signer-section-title">Bunker Sessions</h3>
+          <div id="signer-sessions-list"></div>
+        </div>
+
+        <div class="signer-policy-row">
+          <span>Policy:</span>
+          <select id="signer-policy">
+            <option value="ask">Ask every time</option>
+            <option value="auto-login">Auto-sign logins</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teleport Key Vault -->
+    <div class="card key-vault-card" id="key-vault-card" hidden>
+      <h2>Key Teleport Key</h2>
+      <p class="key-vault-status" id="key-vault-status">
+        Save your key for teleport package generation when using extension login.
+      </p>
+      <form class="key-vault-form" id="key-vault-form">
+        <input
+          type="password"
+          id="key-vault-input"
+          placeholder="Paste nsec1..."
+          autocomplete="off"
+        />
+        <button type="submit" class="btn btn-primary" id="key-vault-save-btn">Save Teleport Key</button>
+      </form>
+      <button type="button" class="btn key-vault-remove-btn" id="key-vault-remove-btn" hidden>Remove Saved Key</button>
+      <p class="key-vault-error" id="key-vault-error" hidden></p>
+    </div>
+
     <div class="card">
       <h2>Your Apps</h2>
       <div class="apps-list" id="apps-list">
@@ -1223,6 +1597,7 @@ export function renderAppsPage(): string {
         </div>
         <p class="profile-about" id="profile-about"></p>
         <p class="profile-npub" id="profile-npub-display"></p>
+        <p class="profile-teleport-badge" id="profile-teleport-badge" hidden>Teleport key saved on server</p>
 
         <!-- Export Key Section (only shown if user has nsec) -->
         <div class="export-key-section hidden" id="export-key-section">
@@ -1270,32 +1645,52 @@ export function renderAppsPage(): string {
     </div>
   </div>
 
-  <!-- Teleport Modal for Key Transfer -->
+  <!-- Teleport Modal -->
   <div class="teleport-modal-overlay" id="teleport-modal" hidden>
     <div class="teleport-modal">
       <button class="teleport-modal-close" type="button" id="teleport-close" aria-label="Close">&times;</button>
-      <h2>Transfer Identity</h2>
-      <p>Click below to copy your unlock code and open <strong id="teleport-app-name"></strong>.</p>
-      <p class="teleport-instructions">Paste the code when prompted to complete login.</p>
-      <button id="teleport-copy-open" class="teleport-btn">Copy Code &amp; Open App</button>
+      <h2>Connect to <span id="teleport-app-name"></span></h2>
+
+      <div class="teleport-mode-select" id="teleport-mode-select" hidden>
+        <label class="teleport-mode-option">
+          <input type="radio" name="teleport-mode" value="bunker" checked />
+          <div class="teleport-mode-label">
+            <strong>Connect as signer</strong>
+            <small>App gets signing access. Your key stays here.</small>
+          </div>
+        </label>
+        <label class="teleport-mode-option">
+          <input type="radio" name="teleport-mode" value="key" />
+          <div class="teleport-mode-label">
+            <strong>Transfer key</strong>
+            <small>Send your nsec to the app.</small>
+          </div>
+        </label>
+      </div>
+
+      <p class="teleport-mode-info" id="teleport-mode-info"></p>
+
+      <button id="teleport-copy-open" class="teleport-btn">Connect</button>
       <p class="teleport-error" id="teleport-error" hidden></p>
 
       <!-- Fallback UI for mobile permission errors -->
       <div class="teleport-fallback" id="teleport-fallback" hidden>
-        <label class="teleport-fallback-label">1. Copy and open this URL in a new tab:</label>
+        <label class="teleport-fallback-label">1. Copy your key teleport package:</label>
         <div class="teleport-fallback-box">
           <input type="text" class="teleport-fallback-input" id="teleport-fallback-url" readonly />
-          <button type="button" class="teleport-copy-btn" id="teleport-copy-url-btn">Copy</button>
+          <button type="button" class="teleport-copy-btn" id="teleport-copy-url-btn">Copy Package</button>
         </div>
 
-        <label class="teleport-fallback-label">2. Copy your unlock code:</label>
+        <label class="teleport-fallback-label">2. Copy temporary nsec (unlock code):</label>
         <div class="teleport-fallback-box">
           <input type="password" class="teleport-fallback-input" id="teleport-fallback-nsec" readonly />
           <button type="button" class="teleport-copy-btn" id="teleport-copy-nsec-btn">Copy</button>
         </div>
 
-        <div class="teleport-fallback-note">
-          Open the URL above in your browser, then paste the unlock code when prompted.
+        <button type="button" class="teleport-btn" id="teleport-open-app-btn">Open App With Package</button>
+
+        <div class="teleport-fallback-note" id="teleport-fallback-note">
+          Paste the package in your app first, then paste the temporary nsec when prompted.
         </div>
       </div>
     </div>
@@ -1321,13 +1716,20 @@ export function renderAppsPage(): string {
     import * as nip44 from 'https://esm.sh/nostr-tools@2.7.2/nip44';
     import { encrypt as nip49Encrypt } from 'https://esm.sh/nostr-tools@2.7.2/nip49';
     import Dexie from 'https://esm.sh/dexie@4.0.4';
+    import { BrowserSigner } from '/signer.js';
 
     // Initialize Dexie database for profile and secrets
     const db = new Dexie('OtherStuffDB');
     db.version(3).stores({
       profiles: 'npub, name, about, picture, nip05, updatedAt',
-      secrets: 'npub',  // Stores encrypted nsec with salt and iv
-      assets: 'url'     // Cached images/assets as blobs
+      secrets: 'npub',
+      assets: 'url'
+    });
+    db.version(4).stores({
+      profiles: 'npub, name, about, picture, nip05, updatedAt',
+      secrets: 'npub',
+      assets: 'url',
+      signerSessions: '++id, secret, active'
     });
 
     // ============================================
@@ -1506,6 +1908,8 @@ export function renderAppsPage(): string {
     const teleportFallbackNsec = document.getElementById('teleport-fallback-nsec');
     const teleportCopyUrlBtn = document.getElementById('teleport-copy-url-btn');
     const teleportCopyNsecBtn = document.getElementById('teleport-copy-nsec-btn');
+    const teleportOpenAppBtn = document.getElementById('teleport-open-app-btn');
+    const teleportFallbackNote = document.getElementById('teleport-fallback-note');
 
     // Password prompt modal elements
     const teleportPasswordModal = document.getElementById('teleport-password-modal');
@@ -1519,6 +1923,10 @@ export function renderAppsPage(): string {
 
     // Current teleport target
     let teleportTarget = null;
+    let teleportMode = 'key';
+
+    // Browser signer instance
+    let signer = null;
 
     // Profile modal elements
     const profileModal = document.getElementById('profile-modal');
@@ -1531,6 +1939,7 @@ export function renderAppsPage(): string {
     const profileNip05 = document.getElementById('profile-nip05');
     const profileAbout = document.getElementById('profile-about');
     const profileNpubDisplay = document.getElementById('profile-npub-display');
+    const profileTeleportBadge = document.getElementById('profile-teleport-badge');
     const profileEditBtn = document.getElementById('profile-edit-btn');
     const profileEditForm = document.getElementById('profile-edit-form');
     const profileEditName = document.getElementById('profile-edit-name');
@@ -1558,12 +1967,24 @@ export function renderAppsPage(): string {
     const welcomeMessageActions = document.getElementById('welcome-message-actions');
     const welcomeMessageDismiss = document.getElementById('welcome-message-dismiss');
 
+    // Teleport key vault
+    const keyVaultCard = document.getElementById('key-vault-card');
+    const keyVaultForm = document.getElementById('key-vault-form');
+    const keyVaultInput = document.getElementById('key-vault-input');
+    const keyVaultSaveBtn = document.getElementById('key-vault-save-btn');
+    const keyVaultRemoveBtn = document.getElementById('key-vault-remove-btn');
+    const keyVaultStatus = document.getElementById('key-vault-status');
+    const keyVaultError = document.getElementById('key-vault-error');
+
     // Get session data
     const npub = sessionStorage.getItem('npub');
     let nsec = sessionStorage.getItem('nsec');  // May be null if using encrypted storage
+    const loginMethod = sessionStorage.getItem('loginMethod');
     const onboarded = sessionStorage.getItem('onboarded');
     const cachedAvatar = sessionStorage.getItem('avatarUrl');
     const cachedName = sessionStorage.getItem('displayName');
+    let hasServerTeleportKey = false;
+    let welcomePubkeyHex = null;
 
     // Current profile data
     let currentProfile = { name: '', about: '', picture: '', nip05: '' };
@@ -1577,6 +1998,68 @@ export function renderAppsPage(): string {
       if (decrypted) {
         nsec = decrypted;
       }
+    }
+
+    function showKeyVaultError(message) {
+      keyVaultError.textContent = message;
+      keyVaultError.hidden = false;
+    }
+
+    function hideKeyVaultError() {
+      keyVaultError.hidden = true;
+    }
+
+    function refreshKeyVaultVisibility() {
+      const shouldShow = loginMethod === 'extension' || hasServerTeleportKey;
+      keyVaultCard.hidden = !shouldShow;
+
+      if (!shouldShow) return;
+
+      if (hasServerTeleportKey) {
+        keyVaultStatus.textContent = 'Saved. Your key is stored as NIP-44 ciphertext and can be used to generate teleport packages.';
+        keyVaultSaveBtn.textContent = 'Update Teleport Key';
+        keyVaultRemoveBtn.hidden = false;
+      } else {
+        keyVaultStatus.textContent = 'Paste your nsec once to store a NIP-44 encrypted teleport key for package generation.';
+        keyVaultSaveBtn.textContent = 'Save Teleport Key';
+        keyVaultRemoveBtn.hidden = true;
+      }
+
+      if (profileTeleportBadge) {
+        profileTeleportBadge.hidden = !hasServerTeleportKey;
+      }
+    }
+
+    async function ensureWelcomePubkeyHex() {
+      if (welcomePubkeyHex) return welcomePubkeyHex;
+
+      const res = await fetch('/api/teleport/welcome-pubkey');
+      const data = await res.json();
+      if (!data.success || !data.npub) {
+        throw new Error(data.error || 'Unable to load welcome pubkey');
+      }
+
+      const decoded = nip19.decode(data.npub);
+      if (decoded.type !== 'npub') {
+        throw new Error('Invalid welcome pubkey response');
+      }
+
+      welcomePubkeyHex = decoded.data;
+      return welcomePubkeyHex;
+    }
+
+    async function loadServerTeleportKeyStatus() {
+      if (!npub) return;
+      try {
+        const res = await fetch('/auth/teleport-key', {
+          headers: { 'X-Npub': npub }
+        });
+        const data = await res.json();
+        hasServerTeleportKey = !!(data.success && data.hasTeleportKey);
+      } catch (err) {
+        hasServerTeleportKey = false;
+      }
+      refreshKeyVaultVisibility();
     }
 
     // Update header avatar with image or fallback
@@ -1642,6 +2125,7 @@ export function renderAppsPage(): string {
       (async () => {
         // Load encrypted nsec from Dexie
         await initializeNsec();
+        await loadServerTeleportKeyStatus();
 
         let displayName = cachedName;
         let avatarUrl = cachedAvatar;
@@ -1660,6 +2144,27 @@ export function renderAppsPage(): string {
 
         updateHeaderAvatar(avatarUrl, displayName);
         userNpubEl.textContent = displayName || npub.slice(0, 12) + '...';
+
+        // Initialize browser signer if key is available
+        if (nsec) {
+          try {
+            const { data: sk } = nip19.decode(nsec);
+            signer = new BrowserSigner(sk, RELAYS);
+
+            // Reload saved bunker sessions
+            const saved = await db.signerSessions.where('active').equals(1).toArray();
+            for (const s of saved) {
+              signer.addSession(s.id, s.secret);
+            }
+
+            signer.onUpdate = updateSignerUI;
+            signer.policy = sessionStorage.getItem('signerPolicy') || 'ask';
+            await signer.start();
+            updateSignerUI();
+          } catch (err) {
+            console.warn('[Signer] Failed to start:', err);
+          }
+        }
       })();
     }
 
@@ -1686,6 +2191,81 @@ export function renderAppsPage(): string {
     logoutBtn.addEventListener('click', () => {
       sessionStorage.clear();
       window.location.href = '/';
+    });
+
+    keyVaultForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideKeyVaultError();
+
+      const candidate = keyVaultInput.value.trim();
+      if (!candidate || !candidate.startsWith('nsec1')) {
+        showKeyVaultError('Enter a valid nsec1 key.');
+        return;
+      }
+
+      keyVaultSaveBtn.disabled = true;
+      keyVaultSaveBtn.textContent = 'Saving...';
+
+      try {
+        const decoded = nip19.decode(candidate);
+        if (decoded.type !== 'nsec') {
+          throw new Error('Invalid nsec format');
+        }
+
+        const secretKey = decoded.data;
+        const derivedNpub = nip19.npubEncode(getPublicKey(secretKey));
+        if (derivedNpub !== npub) {
+          throw new Error('This key does not match your signed-in account.');
+        }
+
+        const welcomeHex = await ensureWelcomePubkeyHex();
+        const conversationKey = nip44.v2.utils.getConversationKey(secretKey, welcomeHex);
+        const encryptedNsecNip44 = nip44.v2.encrypt(candidate, conversationKey);
+
+        const res = await fetch('/auth/teleport-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Npub': npub
+          },
+          body: JSON.stringify({ encryptedNsecNip44 })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to save teleport key');
+        }
+
+        hasServerTeleportKey = true;
+        keyVaultInput.value = '';
+        refreshKeyVaultVisibility();
+        keyVaultStatus.textContent = 'Saved. Your key is now available for manual key teleport package generation.';
+      } catch (err) {
+        showKeyVaultError(err.message || 'Failed to save teleport key');
+      } finally {
+        keyVaultSaveBtn.disabled = false;
+        keyVaultSaveBtn.textContent = hasServerTeleportKey ? 'Update Teleport Key' : 'Save Teleport Key';
+      }
+    });
+
+    keyVaultRemoveBtn.addEventListener('click', async () => {
+      hideKeyVaultError();
+      keyVaultRemoveBtn.disabled = true;
+      try {
+        const res = await fetch('/auth/teleport-key', {
+          method: 'DELETE',
+          headers: { 'X-Npub': npub }
+        });
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to remove teleport key');
+        }
+        hasServerTeleportKey = false;
+        refreshKeyVaultVisibility();
+      } catch (err) {
+        showKeyVaultError(err.message || 'Failed to remove teleport key');
+      } finally {
+        keyVaultRemoveBtn.disabled = false;
+      }
     });
 
 
@@ -1741,7 +2321,7 @@ export function renderAppsPage(): string {
           const app = userApps.find(a => a.id === appId);
           if (!app) return;
 
-          if (app.teleport_pubkey && nsec) {
+          if (app.teleport_pubkey && (nsec || hasServerTeleportKey)) {
             // Show teleport modal for key transfer
             showTeleportModal(app);
           } else {
@@ -1772,17 +2352,40 @@ export function renderAppsPage(): string {
       teleportFallback.hidden = true;
       teleportFallbackUrl.value = '';
       teleportFallbackNsec.value = '';
-      teleportCopyUrlBtn.textContent = 'Copy';
+      teleportFallbackNsec.type = 'password';
+      teleportCopyUrlBtn.textContent = 'Copy Package';
+      teleportCopyUrlBtn.dataset.defaultLabel = 'Copy Package';
       teleportCopyUrlBtn.classList.remove('copied');
       teleportCopyNsecBtn.textContent = 'Copy';
+      teleportCopyNsecBtn.dataset.defaultLabel = 'Copy';
       teleportCopyNsecBtn.classList.remove('copied');
+      teleportOpenAppBtn.hidden = true;
+      teleportOpenAppBtn.dataset.url = '';
     }
 
-    function showTeleportFallback(url, nsecCode) {
-      teleportFallbackUrl.value = url;
-      teleportFallbackNsec.value = nsecCode;
+    function showTeleportFallback(primaryValue, secondValue, isBunker, openUrl = '') {
+      teleportFallbackUrl.value = primaryValue;
+      teleportFallbackNsec.value = secondValue;
+      teleportFallbackNsec.type = isBunker ? 'text' : 'password';
+      const labels = teleportFallback.querySelectorAll('.teleport-fallback-label');
+      if (labels[0]) labels[0].textContent = isBunker
+        ? '1. Copy bunker URI to paste in your app:'
+        : '1. Copy your key teleport package:';
+      if (labels[1]) labels[1].textContent = isBunker
+        ? '2. Copy bunker URI (or use open button):'
+        : '2. Copy temporary nsec (unlock code):';
+      teleportCopyUrlBtn.textContent = isBunker ? 'Copy URI' : 'Copy Package';
+      teleportCopyUrlBtn.dataset.defaultLabel = teleportCopyUrlBtn.textContent;
+      teleportCopyNsecBtn.dataset.defaultLabel = 'Copy';
+      teleportFallbackNote.textContent = isBunker
+        ? 'Paste bunker URI into the target app or open it directly with bunkerconnect.'
+        : 'Paste the package into your app first, then paste temporary nsec when prompted.';
+      teleportOpenAppBtn.hidden = !openUrl;
+      teleportOpenAppBtn.dataset.url = openUrl || '';
       teleportFallback.hidden = false;
-      teleportCopyOpenBtn.hidden = true;
+      teleportCopyOpenBtn.hidden = false;
+      teleportCopyOpenBtn.disabled = false;
+      teleportCopyOpenBtn.textContent = isBunker ? 'Generate New Session' : 'Generate New Package';
     }
 
     function showTeleportModal(app) {
@@ -1792,7 +2395,24 @@ export function renderAppsPage(): string {
       hideTeleportFallback();
       teleportCopyOpenBtn.hidden = false;
       teleportCopyOpenBtn.disabled = false;
-      teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
+
+      const modeSelect = document.getElementById('teleport-mode-select');
+      const modeInfo = document.getElementById('teleport-mode-info');
+
+      if (signer && signer.active) {
+        modeSelect.hidden = false;
+        teleportMode = 'bunker';
+        const bunkerRadio = document.querySelector('input[name="teleport-mode"][value="bunker"]');
+        if (bunkerRadio) bunkerRadio.checked = true;
+        teleportCopyOpenBtn.textContent = 'Connect';
+        modeInfo.textContent = 'The app will request signatures through your browser. You approve each one.';
+      } else {
+        modeSelect.hidden = true;
+        teleportMode = 'key';
+        teleportCopyOpenBtn.textContent = 'Generate Package';
+        modeInfo.textContent = 'Generate a manual key teleport package, then copy temporary nsec when prompted by the app.';
+      }
+
       teleportModal.hidden = false;
     }
 
@@ -1811,9 +2431,11 @@ export function renderAppsPage(): string {
 
     async function performTeleport() {
       if (!teleportTarget) return;
+      if (teleportMode === 'bunker') return performBunkerTeleport();
 
-      // Check if we have nsec available
+      // Check if we have nsec available locally, else use stored server ciphertext.
       let currentNsec = nsec;
+      let useStoredTeleportKey = false;
       if (!currentNsec) {
         // Try to load from Dexie with existing session key
         currentNsec = await loadNsecFromDexie(npub);
@@ -1827,8 +2449,10 @@ export function renderAppsPage(): string {
           }
         }
 
-        if (!currentNsec) {
-          showTeleportError('No key available. Please log in with your nsec first.');
+        if (!currentNsec && hasServerTeleportKey) {
+          useStoredTeleportKey = true;
+        } else if (!currentNsec) {
+          showTeleportError('No key available. Save a teleport key first.');
           return;
         }
       }
@@ -1838,17 +2462,19 @@ export function renderAppsPage(): string {
       hideTeleportError();
 
       try {
-        // Decode nsec to get secret key bytes
-        const { type, data: secretKey } = nip19.decode(currentNsec);
-        if (type !== 'nsec') throw new Error('Invalid nsec');
-
         // Generate throwaway keypair
         const throwawayPrivkey = generateSecretKey();
         const throwawayPubkey = getPublicKey(throwawayPrivkey);
+        const throwawayNsec = nip19.nsecEncode(throwawayPrivkey);
 
         // Encrypt nsec with NIP-44 using conversation key(user, throwaway)
-        const conversationKey = nip44.v2.utils.getConversationKey(secretKey, throwawayPubkey);
-        const encryptedNsec = nip44.v2.encrypt(currentNsec, conversationKey);
+        let encryptedNsec = null;
+        if (!useStoredTeleportKey) {
+          const { type, data: secretKey } = nip19.decode(currentNsec);
+          if (type !== 'nsec') throw new Error('Invalid nsec');
+          const conversationKey = nip44.v2.utils.getConversationKey(secretKey, throwawayPubkey);
+          encryptedNsec = nip44.v2.encrypt(currentNsec, conversationKey);
+        }
 
         // Generate unique hash ID
         const hashId = generateHashId();
@@ -1859,10 +2485,16 @@ export function renderAppsPage(): string {
         // Build request body - use appPubkey for user apps, appId for admin apps
         const requestBody = {
           hashId,
-          encryptedNsec,
           npub,  // User's public key - needed by remote app for decryption
           baseUrl
         };
+
+        if (useStoredTeleportKey) {
+          requestBody.useStoredTeleportKey = true;
+          requestBody.throwawayPubkey = throwawayPubkey;
+        } else {
+          requestBody.encryptedNsec = encryptedNsec;
+        }
 
         if (teleportTarget.isUserApp) {
           // User teleport app - send pubkey directly
@@ -1895,27 +2527,50 @@ export function renderAppsPage(): string {
           }
         }
 
-        // Copy throwaway nsec to clipboard (the unlock code)
-        const throwawayNsec = nip19.nsecEncode(throwawayPrivkey);
-
-        // Try clipboard + window.open, fall back to manual copy UI on mobile permission errors
-        try {
-          await navigator.clipboard.writeText(throwawayNsec);
-          window.open(teleportUrl, '_blank');
-          hideTeleportModal();
-        } catch (clipboardErr) {
-          // Mobile browsers often block clipboard/popups after async operations
-          // Show fallback UI with copyable fields
-          console.warn('Clipboard/popup blocked, showing fallback UI:', clipboardErr.message);
-          showTeleportFallback(teleportUrl, throwawayNsec);
-          teleportCopyOpenBtn.disabled = false;
-          teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
-        }
+        // Always show manual package + temporary nsec workflow.
+        showTeleportFallback(data.blob, throwawayNsec, false, teleportUrl);
       } catch (err) {
         console.error('Teleport error:', err);
         showTeleportError(err.message || 'Failed to transfer identity');
         teleportCopyOpenBtn.disabled = false;
-        teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
+        teleportCopyOpenBtn.textContent = 'Generate Package';
+      }
+    }
+
+    // === Bunker Teleport ===
+
+    async function performBunkerTeleport() {
+      if (!teleportTarget || !signer || !signer.active) return;
+
+      teleportCopyOpenBtn.disabled = true;
+      teleportCopyOpenBtn.textContent = 'Connecting...';
+      hideTeleportError();
+
+      try {
+        const secret = crypto.randomUUID();
+
+        // Store session in Dexie
+        const sessionId = await db.signerSessions.add({
+          appName: teleportTarget.name,
+          appUrl: teleportTarget.url,
+          secret: secret,
+          clientPubkey: null,
+          active: 1,
+          createdAt: Date.now()
+        });
+
+        signer.addSession(sessionId, secret);
+
+        const bunkerUri = signer.getBunkerUri(secret);
+        const separator = teleportTarget.url.includes('#') ? '&' : '#';
+        const teleportUrl = teleportTarget.url + separator + 'bunkerconnect=' + encodeURIComponent(bunkerUri);
+        showTeleportFallback(bunkerUri, bunkerUri, true, teleportUrl);
+        updateSignerUI();
+      } catch (err) {
+        console.error('Bunker teleport error:', err);
+        showTeleportError(err.message || 'Failed to create connection');
+        teleportCopyOpenBtn.disabled = false;
+        teleportCopyOpenBtn.textContent = 'Connect';
       }
     }
 
@@ -1943,13 +2598,14 @@ export function renderAppsPage(): string {
     async function copyWithFeedback(inputEl, btnEl) {
       const value = inputEl.value;
       if (!value) return;
+      const defaultLabel = btnEl.dataset.defaultLabel || 'Copy';
 
       try {
         await navigator.clipboard.writeText(value);
         btnEl.textContent = 'Copied!';
         btnEl.classList.add('copied');
         setTimeout(() => {
-          btnEl.textContent = 'Copy';
+          btnEl.textContent = defaultLabel;
           btnEl.classList.remove('copied');
         }, 2000);
       } catch (err) {
@@ -1966,15 +2622,179 @@ export function renderAppsPage(): string {
     });
 
     teleportCopyNsecBtn.addEventListener('click', () => {
-      // Temporarily show the nsec for copying
-      teleportFallbackNsec.type = 'text';
+      const wasPassword = teleportFallbackNsec.type === 'password';
+      if (wasPassword) teleportFallbackNsec.type = 'text';
       copyWithFeedback(teleportFallbackNsec, teleportCopyNsecBtn).then(() => {
-        // Hide it again after a brief moment
-        setTimeout(() => {
-          teleportFallbackNsec.type = 'password';
-        }, 3000);
+        if (wasPassword) {
+          setTimeout(() => { teleportFallbackNsec.type = 'password'; }, 3000);
+        }
       });
     });
+
+    teleportOpenAppBtn.addEventListener('click', () => {
+      const targetUrl = teleportOpenAppBtn.dataset.url;
+      if (!targetUrl) return;
+      window.open(targetUrl, '_blank');
+    });
+
+    // === Teleport Mode Selection ===
+    document.querySelectorAll('input[name="teleport-mode"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        teleportMode = e.target.value;
+        const modeInfo = document.getElementById('teleport-mode-info');
+        if (teleportMode === 'bunker') {
+          teleportCopyOpenBtn.textContent = 'Connect';
+          modeInfo.textContent = 'The app will request signatures through your browser. You approve each one.';
+        } else {
+          teleportCopyOpenBtn.textContent = 'Generate Package';
+          modeInfo.textContent = 'Generate a manual key teleport package, then copy temporary nsec when prompted by the app.';
+        }
+      });
+    });
+
+    // === Signer UI ===
+
+    const signerCard = document.getElementById('signer-card');
+    const signerBadge = document.getElementById('signer-badge');
+    const signerInfo = document.getElementById('signer-info');
+    const signerBunkerUri = document.getElementById('signer-bunker-uri');
+    const signerCopyUri = document.getElementById('signer-copy-uri');
+    const signerApprovalsList = document.getElementById('signer-approvals-list');
+    const signerClientsList = document.getElementById('signer-clients-list');
+    const signerSessionsList = document.getElementById('signer-sessions-list');
+    const signerPolicySelect = document.getElementById('signer-policy');
+
+    // Signer card toggle
+    document.getElementById('signer-header')?.addEventListener('click', () => {
+      signerCard.classList.toggle('collapsed');
+    });
+
+    // Copy bunker URI
+    signerCopyUri?.addEventListener('click', async () => {
+      const uri = signerBunkerUri.value;
+      if (!uri) return;
+      try {
+        await navigator.clipboard.writeText(uri);
+        signerCopyUri.textContent = 'Copied!';
+        setTimeout(() => signerCopyUri.textContent = 'Copy', 2000);
+      } catch {}
+    });
+
+    // Policy change
+    signerPolicySelect?.addEventListener('change', () => {
+      if (signer) {
+        signer.policy = signerPolicySelect.value;
+        sessionStorage.setItem('signerPolicy', signerPolicySelect.value);
+      }
+    });
+
+    function updateSignerUI() {
+      if (!signer) {
+        signerCard.hidden = true;
+        return;
+      }
+
+      signerCard.hidden = false;
+      const connected = signer.connectedCount;
+
+      if (signer.active && connected > 0) {
+        signerBadge.textContent = 'Active';
+        signerBadge.className = 'signer-badge active';
+        signerInfo.textContent = connected + ' relay' + (connected !== 1 ? 's' : '') + ' connected';
+      } else if (signer.active) {
+        signerBadge.textContent = 'Reconnecting';
+        signerBadge.className = 'signer-badge inactive';
+        signerInfo.textContent = 'Reconnecting to relays...';
+      } else {
+        signerBadge.textContent = 'Inactive';
+        signerBadge.className = 'signer-badge inactive';
+        signerInfo.textContent = 'Signer is not running';
+      }
+
+      // Bunker URI (no secret - reusable, requires approval)
+      signerBunkerUri.value = signer.getBunkerUri();
+
+      // Policy
+      signerPolicySelect.value = signer.policy;
+
+      // Pending approvals
+      const approvalsSection = document.getElementById('signer-approvals-section');
+      if (signer.pendingApprovals.length > 0) {
+        approvalsSection.hidden = false;
+        signerApprovalsList.innerHTML = signer.pendingApprovals.map(a => {
+          const shortClient = a.client.slice(0, 12) + '...';
+          return '<div class="approval-item">' +
+            '<div class="approval-desc">' + escapeHtml(a.description) + '</div>' +
+            '<div class="approval-client">from ' + shortClient + '</div>' +
+            '<div class="approval-actions">' +
+              '<button class="approval-approve" data-id="' + a.id + '">Approve</button>' +
+              '<button class="approval-reject" data-id="' + a.id + '">Reject</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+
+        signerApprovalsList.querySelectorAll('.approval-approve').forEach(btn => {
+          btn.addEventListener('click', () => signer.resolveApproval(btn.dataset.id, true));
+        });
+        signerApprovalsList.querySelectorAll('.approval-reject').forEach(btn => {
+          btn.addEventListener('click', () => signer.resolveApproval(btn.dataset.id, false));
+        });
+      } else {
+        approvalsSection.hidden = true;
+      }
+
+      // Connected clients
+      const clientsSection = document.getElementById('signer-clients-section');
+      if (signer.clients.size > 0) {
+        clientsSection.hidden = false;
+        let html = '';
+        for (const [pub, info] of signer.clients) {
+          const ago = Math.round((Date.now() - info.lastSeen) / 1000);
+          const timeStr = ago < 60 ? ago + 's ago' : Math.round(ago / 60) + 'm ago';
+          html += '<div class="signer-client-item">' +
+            '<span class="signer-client-pub">' + pub.slice(0, 16) + '...</span>' +
+            '<span class="signer-client-time">' + timeStr + '</span>' +
+          '</div>';
+        }
+        signerClientsList.innerHTML = html;
+      } else {
+        clientsSection.hidden = true;
+      }
+
+      // Bunker sessions from Dexie
+      updateSignerSessions();
+    }
+
+    async function updateSignerSessions() {
+      const sessionsSection = document.getElementById('signer-sessions-section');
+      try {
+        const sessions = await db.signerSessions.where('active').equals(1).toArray();
+        if (sessions.length > 0) {
+          sessionsSection.hidden = false;
+          signerSessionsList.innerHTML = sessions.map(s =>
+            '<div class="signer-session-item">' +
+              '<span class="signer-session-name">' + escapeHtml(s.appName) + '</span>' +
+              '<button class="signer-session-revoke" data-id="' + s.id + '" data-secret="' + s.secret + '">Revoke</button>' +
+            '</div>'
+          ).join('');
+
+          signerSessionsList.querySelectorAll('.signer-session-revoke').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = parseInt(btn.dataset.id, 10);
+              const secret = btn.dataset.secret;
+              if (!confirm('Revoke this session?')) return;
+              await db.signerSessions.update(id, { active: 0 });
+              if (signer) signer.removeSession(secret);
+              updateSignerUI();
+            });
+          });
+        } else {
+          sessionsSection.hidden = true;
+        }
+      } catch (err) {
+        sessionsSection.hidden = true;
+      }
+    }
 
     // Password prompt modal event listeners
     teleportPasswordClose.addEventListener('click', () => {
@@ -2304,7 +3124,7 @@ export function renderAppsPage(): string {
           const app = userTeleportApps.find(a => a.app_pubkey === pubkey);
           if (!app) return;
 
-          if (nsec) {
+          if (nsec || hasServerTeleportKey) {
             // Show teleport modal for user app
             showUserAppTeleportModal(app);
           } else {
@@ -2345,21 +3165,15 @@ export function renderAppsPage(): string {
       });
     }
 
-    // Teleport to user app
+    // Teleport to user app - reuse common showTeleportModal
     function showUserAppTeleportModal(app) {
-      // Reuse the existing teleport modal
-      teleportTarget = {
+      showTeleportModal({
         id: app.id,
         name: app.app_name,
         url: app.app_url,
-        teleport_pubkey: app.app_pubkey, // Already hex
+        teleport_pubkey: app.app_pubkey,
         isUserApp: true
-      };
-      teleportAppName.textContent = app.app_name;
-      hideTeleportError();
-      teleportCopyOpenBtn.disabled = false;
-      teleportCopyOpenBtn.textContent = 'Copy Code & Open App';
-      teleportModal.hidden = false;
+      });
     }
 
     // Load user teleport apps on page load
@@ -2463,6 +3277,11 @@ export function renderAppsPage(): string {
 
       // Npub
       profileNpubDisplay.textContent = npub;
+
+      // Teleport key badge
+      if (profileTeleportBadge) {
+        profileTeleportBadge.hidden = !hasServerTeleportKey;
+      }
 
       // Export key section - only show if user has nsec (loaded from Dexie or sessionStorage)
       if (nsec) {

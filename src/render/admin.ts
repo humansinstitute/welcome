@@ -809,6 +809,152 @@ export function renderAdminPage(): string {
     .unauthorized a:hover {
       text-decoration: underline;
     }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.9rem;
+      font-family: var(--font-body);
+      font-weight: 500;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--purple);
+      border-bottom-color: var(--purple);
+    }
+
+    .tab-count {
+      font-size: 0.75rem;
+      background: var(--border-soft);
+      color: var(--muted);
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 0.375rem;
+    }
+
+    .tab-btn.active .tab-count {
+      background: var(--purple);
+      color: white;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Members table */
+    .members-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .members-table th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .members-table td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border-soft);
+      vertical-align: top;
+    }
+
+    .members-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .members-table tr:hover td {
+      background: var(--surface-warm);
+    }
+
+    .member-name {
+      font-weight: 500;
+    }
+
+    .member-npub-short {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .member-email {
+      font-size: 0.8rem;
+      color: var(--text-warm);
+    }
+
+    .member-groups-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
+    .member-group-tag {
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+
+    .member-date {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .members-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-warm);
+    }
+
+    .members-search {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-family: var(--font-body);
+      width: 200px;
+    }
+
+    .members-search:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -827,9 +973,27 @@ export function renderAdminPage(): string {
 
     <!-- Admin content (hidden until verified as admin) -->
     <div id="admin-content" hidden>
-      <!-- Manage Apps -->
-      <div class="card">
-        <h2>Manage Apps</h2>
+      <!-- Tab Navigation -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="members">Members<span class="tab-count" id="members-count">-</span></button>
+        <button class="tab-btn" data-tab="apps">Apps<span class="tab-count" id="apps-count">-</span></button>
+        <button class="tab-btn" data-tab="codes">Invite Codes<span class="tab-count" id="codes-count">-</span></button>
+        <button class="tab-btn" data-tab="groups">Groups<span class="tab-count" id="groups-count">-</span></button>
+      </nav>
+
+      <!-- Members Tab -->
+      <div class="tab-panel active" id="tab-members">
+        <div class="members-summary">
+          <span id="members-total">Loading members...</span>
+          <input type="text" class="members-search" id="members-search" placeholder="Search members...">
+        </div>
+        <div id="members-list">
+          <div class="admin-empty">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Apps Tab -->
+      <div class="tab-panel" id="tab-apps">
         <div class="admin-list" id="apps-list">
           <div class="admin-empty">Loading...</div>
         </div>
@@ -854,9 +1018,8 @@ export function renderAdminPage(): string {
         </form>
       </div>
 
-      <!-- Invite Codes -->
-      <div class="card">
-        <h2>Invite Codes</h2>
+      <!-- Invite Codes Tab -->
+      <div class="tab-panel" id="tab-codes">
         <div class="admin-list" id="codes-list">
           <div class="admin-empty">Loading...</div>
         </div>
@@ -871,9 +1034,8 @@ export function renderAdminPage(): string {
         </form>
       </div>
 
-      <!-- Groups -->
-      <div class="card">
-        <h2>Groups</h2>
+      <!-- Groups Tab -->
+      <div class="tab-panel" id="tab-groups">
         <p class="admin-help-text">Groups control which apps users can see. Users are added to groups via invite codes or manually below.</p>
         <div class="admin-list" id="groups-list">
           <div class="admin-empty">Loading...</div>
@@ -1041,6 +1203,7 @@ export function renderAdminPage(): string {
     let adminAppsData = {};
     let adminCodesData = {};
     let expandedGroups = {};
+    let allMembers = [];
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -1049,6 +1212,23 @@ export function renderAdminPage(): string {
     }
 
     function initAdmin() {
+      // Tab switching
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.dataset.tab;
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('tab-' + tabId).classList.add('active');
+        });
+      });
+
+      // Members search
+      document.getElementById('members-search').addEventListener('input', (e) => {
+        renderMembers(e.target.value.trim().toLowerCase());
+      });
+
+      loadMembers();
       loadApps();
       loadCodes();
       loadGroups();
@@ -1222,6 +1402,85 @@ export function renderAdminPage(): string {
       });
     }
 
+    // ===== MEMBERS =====
+
+    async function loadMembers() {
+      const listEl = document.getElementById('members-list');
+      try {
+        const res = await fetch('/admin/users', { headers: { 'X-Npub': npub } });
+        const data = await res.json();
+
+        if (!data.success) {
+          listEl.innerHTML = '<div class="admin-empty">Failed to load members</div>';
+          return;
+        }
+
+        allMembers = data.users;
+        document.getElementById('members-count').textContent = allMembers.length;
+        renderMembers('');
+      } catch (err) {
+        console.error('Failed to load members:', err);
+        listEl.innerHTML = '<div class="admin-empty">Failed to load members</div>';
+      }
+    }
+
+    function renderMembers(filter) {
+      const listEl = document.getElementById('members-list');
+      const totalEl = document.getElementById('members-total');
+
+      let filtered = allMembers;
+      if (filter) {
+        filtered = allMembers.filter(u => {
+          const searchable = [
+            u.display_name || '',
+            u.email || '',
+            u.npub || '',
+            u.invite_code || '',
+            ...(u.groups || []).map(g => g.name)
+          ].join(' ').toLowerCase();
+          return searchable.includes(filter);
+        });
+      }
+
+      totalEl.textContent = filter
+        ? filtered.length + ' of ' + allMembers.length + ' members'
+        : allMembers.length + ' member' + (allMembers.length !== 1 ? 's' : '');
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div class="admin-empty">' + (filter ? 'No members match your search' : 'No members yet') + '</div>';
+        return;
+      }
+
+      const rows = filtered.map(user => {
+        const shortNpub = user.npub.slice(0, 12) + '...' + user.npub.slice(-6);
+        const name = user.display_name || '-';
+        const email = user.email && !user.email.endsWith('@extension.local') ? user.email : '-';
+        const groupTags = (user.groups || []).map(g =>
+          '<span class="member-group-tag">' + escapeHtml(g.name) + '</span>'
+        ).join('');
+        const date = user.created_at ? new Date(user.created_at + 'Z').toLocaleDateString() : '-';
+
+        return '<tr>' +
+          '<td><div class="member-name">' + escapeHtml(name) + '</div><div class="member-npub-short" title="' + user.npub + '">' + shortNpub + '</div></td>' +
+          '<td class="member-email">' + escapeHtml(email) + '</td>' +
+          '<td><span style="font-family:monospace;font-size:0.8rem">' + escapeHtml(user.invite_code || '-') + '</span></td>' +
+          '<td><div class="member-groups-list">' + (groupTags || '<span style="color:var(--muted);font-size:0.8rem">-</span>') + '</div></td>' +
+          '<td class="member-date">' + date + '</td>' +
+        '</tr>';
+      }).join('');
+
+      listEl.innerHTML = '<table class="members-table">' +
+        '<thead><tr>' +
+          '<th>Name / npub</th>' +
+          '<th>Email</th>' +
+          '<th>Invite Code</th>' +
+          '<th>Groups</th>' +
+          '<th>Joined</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+    }
+
     // ===== APPS =====
 
     async function loadApps() {
@@ -1242,6 +1501,7 @@ export function renderAdminPage(): string {
 
         adminAppsData = {};
         data.apps.forEach(app => adminAppsData[app.id] = app);
+        document.getElementById('apps-count').textContent = data.apps.length;
 
         listEl.innerHTML = data.apps.map(app => {
           const iconHtml = app.icon_url
@@ -1469,6 +1729,7 @@ export function renderAdminPage(): string {
 
         adminCodesData = {};
         data.codes.forEach(code => adminCodesData[code.code] = code);
+        document.getElementById('codes-count').textContent = data.codes.length;
 
         listEl.innerHTML = data.codes.map(code => {
           const usageText = code.max_uses ? code.uses + '/' + code.max_uses + ' uses' : code.uses + ' uses';
@@ -1819,6 +2080,7 @@ export function renderAdminPage(): string {
         }
 
         allGroups = data.groups;
+        document.getElementById('groups-count').textContent = data.groups.length;
 
         if (data.groups.length === 0) {
           listEl.innerHTML = '<div class="admin-empty">No groups yet. Create groups to control app access.</div>';

@@ -10,6 +10,8 @@ import {
   updateApp,
   deleteApp,
   toggleAppVisibility,
+  getAllUsers,
+  getUserGroupsByNpub,
   // Group functions
   getAllGroups,
   getGroupById,
@@ -39,6 +41,37 @@ import {
 function isAdmin(npub: string | null): boolean {
   if (!npub || !ADMIN_NPUB) return false;
   return npub === ADMIN_NPUB;
+}
+
+export async function handleGetUsers(req: Request): Promise<Response> {
+  try {
+    const npub = req.headers.get("X-Npub");
+
+    if (!isAdmin(npub)) {
+      return Response.json(
+        { success: false, error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    const users = getAllUsers();
+    // Enrich with group info
+    const enriched = users.map(user => {
+      const groups = getUserGroupsByNpub(user.npub);
+      return {
+        ...user,
+        groups: groups.map(g => ({ id: g.group_id, name: g.group_name }))
+      };
+    });
+
+    return Response.json({ success: true, users: enriched });
+  } catch (err) {
+    console.error("Get users error:", err);
+    return Response.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function handleGetInviteCodes(req: Request): Promise<Response> {
