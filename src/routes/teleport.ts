@@ -5,7 +5,7 @@ import {
   storeTeleportKey,
   getVisibleAppsForNpub,
   getAppById,
-  getUserTeleportNip44,
+  getTeleportVaultKey,
 } from "../db.ts";
 import { TELEPORT_EXPIRY_SECONDS, WELCOME_PRIVKEY } from "../config.ts";
 
@@ -182,7 +182,7 @@ export async function handleStoreTeleportKey(req: Request): Promise<Response> {
         );
       }
 
-      const storedEncryptedNsec = getUserTeleportNip44(npub);
+      const storedEncryptedNsec = getTeleportVaultKey(npub);
       if (!storedEncryptedNsec) {
         return Response.json(
           { success: false, error: "No stored teleport key for this user" },

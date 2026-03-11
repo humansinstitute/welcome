@@ -8,9 +8,9 @@ import {
   addUserToGroup,
   getUserByNpub,
   createExtensionUser,
-  setUserTeleportNip44,
-  getUserTeleportNip44,
-  clearUserTeleportNip44,
+  setTeleportVaultKey,
+  getTeleportVaultKey,
+  deleteTeleportVaultKey,
 } from "../db.ts";
 
 function hexToBytes(hex: string): Uint8Array {
@@ -259,15 +259,7 @@ export async function handleGetTeleportKeyStatus(req: Request): Promise<Response
       );
     }
 
-    const user = getUserByNpub(npub);
-    if (!user) {
-      return Response.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    const encrypted = getUserTeleportNip44(npub);
+    const encrypted = getTeleportVaultKey(npub);
     return Response.json({
       success: true,
       hasTeleportKey: !!encrypted,
@@ -290,14 +282,6 @@ export async function handleStoreTeleportKeyMaterial(req: Request): Promise<Resp
       return Response.json(
         { success: false, error: "Authentication required" },
         { status: 401 }
-      );
-    }
-
-    const user = getUserByNpub(npub);
-    if (!user) {
-      return Response.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
       );
     }
 
@@ -362,7 +346,7 @@ export async function handleStoreTeleportKeyMaterial(req: Request): Promise<Resp
       );
     }
 
-    const saved = setUserTeleportNip44(npub, encryptedNsecNip44);
+    const saved = setTeleportVaultKey(npub, encryptedNsecNip44);
     if (!saved) {
       return Response.json(
         { success: false, error: "Failed to store teleport key" },
@@ -391,21 +375,7 @@ export async function handleDeleteTeleportKeyMaterial(req: Request): Promise<Res
       );
     }
 
-    const user = getUserByNpub(npub);
-    if (!user) {
-      return Response.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    const removed = clearUserTeleportNip44(npub);
-    if (!removed) {
-      return Response.json(
-        { success: false, error: "Failed to remove teleport key" },
-        { status: 500 }
-      );
-    }
+    deleteTeleportVaultKey(npub);
 
     return Response.json({ success: true, hasTeleportKey: false });
   } catch (err) {

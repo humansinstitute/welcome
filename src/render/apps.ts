@@ -2048,13 +2048,23 @@ export function renderAppsPage(): string {
       return welcomePubkeyHex;
     }
 
+    async function requestTeleportKey(method, body = null) {
+      const res = await fetch('/auth/teleport-key', {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Npub': npub
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+
+      return res.json();
+    }
+
     async function loadServerTeleportKeyStatus() {
       if (!npub) return;
       try {
-        const res = await fetch('/auth/teleport-key', {
-          headers: { 'X-Npub': npub }
-        });
-        const data = await res.json();
+        const data = await requestTeleportKey('GET');
         hasServerTeleportKey = !!(data.success && data.hasTeleportKey);
       } catch (err) {
         hasServerTeleportKey = false;
@@ -2145,26 +2155,7 @@ export function renderAppsPage(): string {
         updateHeaderAvatar(avatarUrl, displayName);
         userNpubEl.textContent = displayName || npub.slice(0, 12) + '...';
 
-        // Initialize browser signer if key is available
-        if (nsec) {
-          try {
-            const { data: sk } = nip19.decode(nsec);
-            signer = new BrowserSigner(sk, RELAYS);
-
-            // Reload saved bunker sessions
-            const saved = await db.signerSessions.where('active').equals(1).toArray();
-            for (const s of saved) {
-              signer.addSession(s.id, s.secret);
-            }
-
-            signer.onUpdate = updateSignerUI;
-            signer.policy = sessionStorage.getItem('signerPolicy') || 'ask';
-            await signer.start();
-            updateSignerUI();
-          } catch (err) {
-            console.warn('[Signer] Failed to start:', err);
-          }
-        }
+        updateSignerUI();
       })();
     }
 
@@ -2222,15 +2213,7 @@ export function renderAppsPage(): string {
         const conversationKey = nip44.v2.utils.getConversationKey(secretKey, welcomeHex);
         const encryptedNsecNip44 = nip44.v2.encrypt(candidate, conversationKey);
 
-        const res = await fetch('/auth/teleport-key', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Npub': npub
-          },
-          body: JSON.stringify({ encryptedNsecNip44 })
-        });
-        const data = await res.json();
+        const data = await requestTeleportKey('POST', { encryptedNsecNip44 });
         if (!data.success) {
           throw new Error(data.error || 'Failed to save teleport key');
         }
@@ -2251,11 +2234,7 @@ export function renderAppsPage(): string {
       hideKeyVaultError();
       keyVaultRemoveBtn.disabled = true;
       try {
-        const res = await fetch('/auth/teleport-key', {
-          method: 'DELETE',
-          headers: { 'X-Npub': npub }
-        });
-        const data = await res.json();
+        const data = await requestTeleportKey('DELETE');
         if (!data.success) {
           throw new Error(data.error || 'Failed to remove teleport key');
         }
@@ -2388,6 +2367,24 @@ export function renderAppsPage(): string {
       teleportCopyOpenBtn.textContent = isBunker ? 'Generate New Session' : 'Generate New Package';
     }
 
+    async function primeTeleportUnlockCode(nsecCode) {
+      if (!nsecCode) return false;
+      try {
+        await navigator.clipboard.writeText(nsecCode);
+        teleportCopyNsecBtn.textContent = 'Copied!';
+        teleportCopyNsecBtn.classList.add('copied');
+        setTimeout(() => {
+          const defaultLabel = teleportCopyNsecBtn.dataset.defaultLabel || 'Copy';
+          teleportCopyNsecBtn.textContent = defaultLabel;
+          teleportCopyNsecBtn.classList.remove('copied');
+        }, 2000);
+        return true;
+      } catch (err) {
+        console.warn('Failed to prime teleport unlock code clipboard:', err);
+        return false;
+      }
+    }
+
     function showTeleportModal(app) {
       teleportTarget = app;
       teleportAppName.textContent = app.name;
@@ -2399,19 +2396,12 @@ export function renderAppsPage(): string {
       const modeSelect = document.getElementById('teleport-mode-select');
       const modeInfo = document.getElementById('teleport-mode-info');
 
-      if (signer && signer.active) {
-        modeSelect.hidden = false;
-        teleportMode = 'bunker';
-        const bunkerRadio = document.querySelector('input[name="teleport-mode"][value="bunker"]');
-        if (bunkerRadio) bunkerRadio.checked = true;
-        teleportCopyOpenBtn.textContent = 'Connect';
-        modeInfo.textContent = 'The app will request signatures through your browser. You approve each one.';
-      } else {
-        modeSelect.hidden = true;
-        teleportMode = 'key';
-        teleportCopyOpenBtn.textContent = 'Generate Package';
-        modeInfo.textContent = 'Generate a manual key teleport package, then copy temporary nsec when prompted by the app.';
-      }
+      modeSelect.hidden = true;
+      teleportMode = 'key';
+      const keyRadio = document.querySelector('input[name="teleport-mode"][value="key"]');
+      if (keyRadio) keyRadio.checked = true;
+      teleportCopyOpenBtn.textContent = 'Generate Package';
+      modeInfo.textContent = 'Generate a manual key teleport package, then copy temporary nsec when prompted by the app.';
 
       teleportModal.hidden = false;
     }
@@ -2431,7 +2421,6 @@ export function renderAppsPage(): string {
 
     async function performTeleport() {
       if (!teleportTarget) return;
-      if (teleportMode === 'bunker') return performBunkerTeleport();
 
       // Check if we have nsec available locally, else use stored server ciphertext.
       let currentNsec = nsec;
@@ -2529,6 +2518,7 @@ export function renderAppsPage(): string {
 
         // Always show manual package + temporary nsec workflow.
         showTeleportFallback(data.blob, throwawayNsec, false, teleportUrl);
+        await primeTeleportUnlockCode(throwawayNsec);
       } catch (err) {
         console.error('Teleport error:', err);
         showTeleportError(err.message || 'Failed to transfer identity');
@@ -2631,9 +2621,10 @@ export function renderAppsPage(): string {
       });
     });
 
-    teleportOpenAppBtn.addEventListener('click', () => {
+    teleportOpenAppBtn.addEventListener('click', async () => {
       const targetUrl = teleportOpenAppBtn.dataset.url;
       if (!targetUrl) return;
+      await primeTeleportUnlockCode(teleportFallbackNsec.value);
       window.open(targetUrl, '_blank');
     });
 

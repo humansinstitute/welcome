@@ -12,7 +12,6 @@ db.run(`
     email TEXT NOT NULL UNIQUE,
     npub TEXT NOT NULL UNIQUE,
     ncryptsec TEXT NOT NULL,
-    teleport_nsec_nip44 TEXT DEFAULT NULL,
     password_hash TEXT NOT NULL,
     salt TEXT NOT NULL,
     invite_code TEXT NOT NULL,
@@ -22,13 +21,6 @@ db.run(`
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `);
-
-// Migration: Add teleport_nsec_nip44 column to users if it doesn't exist
-try {
-  db.run("ALTER TABLE users ADD COLUMN teleport_nsec_nip44 TEXT DEFAULT NULL");
-} catch {
-  // Column already exists, ignore
-}
 
 // Migration: Add welcome_dismissed column to users if it doesn't exist
 try {
@@ -124,6 +116,16 @@ db.run(`
   )
 `);
 console.log("[DB] teleport_keys table ready");
+
+// Key vault for long-lived key-teleport material (independent from users table)
+db.run(`
+  CREATE TABLE IF NOT EXISTS teleport_key_vault (
+    npub TEXT PRIMARY KEY,
+    encrypted_nsec_nip44 TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
 // Groups table
 db.run(`
@@ -237,17 +239,6 @@ const updateOnboardingStatusStmt = db.query<User, [string, string]>(
   `UPDATE users SET onboarding_status = ?, updated_at = CURRENT_TIMESTAMP
    WHERE npub = ? RETURNING *`
 );
-const updateUserTeleportNip44Stmt = db.query<User, [string, string]>(
-  `UPDATE users SET teleport_nsec_nip44 = ?, updated_at = CURRENT_TIMESTAMP
-   WHERE npub = ? RETURNING *`
-);
-const clearUserTeleportNip44Stmt = db.query<User, [string]>(
-  `UPDATE users SET teleport_nsec_nip44 = NULL, updated_at = CURRENT_TIMESTAMP
-   WHERE npub = ? RETURNING *`
-);
-const getUserTeleportNip44Stmt = db.query<{ teleport_nsec_nip44: string | null }, [string]>(
-  "SELECT teleport_nsec_nip44 FROM users WHERE npub = ?"
-);
 
 // Prepared statements - All Users (admin)
 const getAllUsersStmt = db.query<User, []>(
@@ -323,32 +314,6 @@ export function updateOnboardingStatus(
   if (!npub) return null;
   const user = updateOnboardingStatusStmt.get(status, npub) as User | undefined;
   return user ?? null;
-}
-
-export function setUserTeleportNip44(npub: string, encryptedNsecNip44: string): boolean {
-  if (!npub || !encryptedNsecNip44) return false;
-  try {
-    const user = updateUserTeleportNip44Stmt.get(encryptedNsecNip44, npub) as User | undefined;
-    return !!user;
-  } catch {
-    return false;
-  }
-}
-
-export function clearUserTeleportNip44(npub: string): boolean {
-  if (!npub) return false;
-  try {
-    const user = clearUserTeleportNip44Stmt.get(npub) as User | undefined;
-    return !!user;
-  } catch {
-    return false;
-  }
-}
-
-export function getUserTeleportNip44(npub: string): string | null {
-  if (!npub) return null;
-  const row = getUserTeleportNip44Stmt.get(npub) as { teleport_nsec_nip44: string | null } | undefined;
-  return row?.teleport_nsec_nip44 ?? null;
 }
 
 // All users (admin)
@@ -571,6 +536,18 @@ const getTeleportKeyStmt = db.query<TeleportKey, [string]>(
 );
 const deleteTeleportKeyStmt = db.prepare("DELETE FROM teleport_keys WHERE hash_id = ?");
 const cleanupExpiredKeysStmt = db.prepare("DELETE FROM teleport_keys WHERE expires_at < ?");
+const upsertTeleportVaultKeyStmt = db.query<{ npub: string }, [string, string]>(
+  `INSERT INTO teleport_key_vault (npub, encrypted_nsec_nip44)
+   VALUES (?, ?)
+   ON CONFLICT(npub) DO UPDATE SET
+     encrypted_nsec_nip44 = excluded.encrypted_nsec_nip44,
+     updated_at = CURRENT_TIMESTAMP
+   RETURNING npub`
+);
+const getTeleportVaultKeyStmt = db.query<{ encrypted_nsec_nip44: string }, [string]>(
+  "SELECT encrypted_nsec_nip44 FROM teleport_key_vault WHERE npub = ?"
+);
+const deleteTeleportVaultKeyStmt = db.prepare("DELETE FROM teleport_key_vault WHERE npub = ?");
 
 export function storeTeleportKey(
   hashId: string,
@@ -613,6 +590,28 @@ export function cleanupExpiredTeleportKeys(): number {
   const now = Math.floor(Date.now() / 1000);
   const result = cleanupExpiredKeysStmt.run(now);
   return result.changes;
+}
+
+export function setTeleportVaultKey(npub: string, encryptedNsecNip44: string): boolean {
+  if (!npub || !encryptedNsecNip44) return false;
+  try {
+    const row = upsertTeleportVaultKeyStmt.get(npub, encryptedNsecNip44) as { npub: string } | undefined;
+    return !!row;
+  } catch {
+    return false;
+  }
+}
+
+export function getTeleportVaultKey(npub: string): string | null {
+  if (!npub) return null;
+  const row = getTeleportVaultKeyStmt.get(npub) as { encrypted_nsec_nip44: string } | undefined;
+  return row?.encrypted_nsec_nip44 ?? null;
+}
+
+export function deleteTeleportVaultKey(npub: string): boolean {
+  if (!npub) return false;
+  deleteTeleportVaultKeyStmt.run(npub);
+  return true;
 }
 
 // ============================================

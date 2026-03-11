@@ -7,7 +7,6 @@ export type User = {
   email: string;
   npub: string;
   ncryptsec: string;
-  teleport_nsec_nip44: string | null;
   password_hash: string;
   salt: string;
   invite_code: string;
